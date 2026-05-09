@@ -37,6 +37,9 @@ class SimulationRequest(BaseModel):
  
     # 테스트 대상 URL
     target_url: str = Field(..., example="https://shopping-mall.com/checkout")
+    
+    # AI에게 줄 자연어 지시
+    task: str = Field(..., example="검색창에 파운데이션 모델 검색하고 게시글 클릭해줘")
  
     # 성공 조건 (Python 코드로 검증)
     success_condition: SuccessCondition

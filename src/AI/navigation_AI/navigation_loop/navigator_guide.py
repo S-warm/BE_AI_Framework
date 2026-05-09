@@ -60,7 +60,7 @@ class NavigatorGuide:
         for attempt in range(1, self.MAX_ATTEMPTS + 1):
             print(f"\n[GUIDE] 시도 {attempt}/{self.MAX_ATTEMPTS}")
             
-            self.page.goto(url, wait_until='networkidle')
+            self.page.goto(url, wait_until='domcontentloaded', timeout=60000)
             success, urls = self._run_once(goal, attempt)
             
             if success:

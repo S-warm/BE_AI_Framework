@@ -8,130 +8,145 @@ _upload_to_s3 = 지금은 URL만 생성하는 플레이스홀더. S3 수정할 �
 
 import os
 import uuid
+import json
+import redis as redis_lib
 from celery import Celery
-from datetime import datetime
-from slugify import slugify  # pip install python-slugify
+from pathlib import Path
 
-# ────────────────────────────────────────────
-# Celery 앱 초기화
-# Redis를 브로커(작업 큐)이자 백엔드(결과 저장소)로 사용
-# ────────────────────────────────────────────
 celery_app = Celery(
     "ux_swarm",
-    broker=os.getenv("REDIS_URL", "redis://localhost:6379/0"),   # 작업 받는 곳
-    backend=os.getenv("REDIS_URL", "redis://localhost:6379/0"),  # 결과 저장하는 곳
+    broker=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+    backend=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
 )
- 
- 
-# ────────────────────────────────────────────
-# 상태 업데이트 헬퍼
-# NavigationLoop에서 step마다 호출해서 폴링 응답에 반영
-# ────────────────────────────────────────────
+
+DB_PATH = "/app/cache/test_cache.db"
+
+
+def get_redis():
+    return redis_lib.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+
+
 def update_status(job_id: str, completed: int, total: int, failed: int):
-    """
-    Redis에 현재 진행 상태 저장
-    페르소나 1개 완료마다 호출됨
-    Spring이 /status/{job_id} 폴링할 때 이 값을 반환함
- 
-    Args:
-        job_id: 작업 고유 ID
-        completed: 완료된 페르소나 수
-        total: 전체 페르소나 수
-        failed: 실패한 페르소나 수
-    """
-    celery_app.backend.set(
-        f"status:{job_id}",
-        f"{completed}|{total}|{failed}",
-        ex=3600  # 1시간 후 자동 만료
+    r = get_redis()
+    r.set(f"status:{job_id}", f"{completed}|{total}|{failed}", ex=3600)
+
+
+def _trigger_step_functions(session_dir: str):
+    """테스트 코드 trigger_step_functions_after_all fixture와 동일한 로직"""
+    import boto3
+    client = boto3.client('stepfunctions', region_name='ap-northeast-2')
+    client.start_execution(
+        stateMachineArn='arn:aws:states:ap-northeast-2:195765661361:stateMachine:swarm-auditor-pipeline',
+        input=json.dumps({"prefix": f"raw/{session_dir}"})
     )
- 
- 
-# ────────────────────────────────────────────
-# 핵심 Celery 태스크: 시뮬레이션 1개 실행
-# age_group 1개 + 시뮬레이션 1회에 해당
-# routes.py에서 age_count만큼 반복 호출됨
-# ────────────────────────────────────────────
+    print(f"[STEP_FUNCTIONS] 트리거: raw/{session_dir}")
+
+
 @celery_app.task(bind=True)
 def run_simulation(self, job_id: str, target_url: str, task: str,
-                   age_group: str, success_condition: dict, title: str):
-    """
-    시뮬레이션 단일 실행 태스크
- 
-    Args:
-        job_id: 전체 배치 작업 ID (같은 요청의 모든 태스크가 공유)
-        target_url: 테스트할 URL
-        task: AI에게 줄 자연어 지시 (현재는 target_url 기반으로 생성)
-        age_group: 페르소나 연령대 ("10s", "20s", ... "70s")
-        success_condition: {"path": "/...", "required_params": {...}}
-        title: 프로젝트 제목 (S3 경로용)
-    """
- 
-    # S3 저장 경로 생성
-    # title을 slug로 변환 (한글/특수문자 → 영문 소문자)
-    # 예: "Q1 2026 체크아웃 테스트" → "q1-2026"
-    title_slug = slugify(title) or "untitled"
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    sim_id = str(uuid.uuid4())[:8]  # 충돌 방지용 짧은 ID
- 
-    s3_prefix = f"raw/logs/{title_slug}/{timestamp}/{age_group}/{sim_id}"
- 
+                   age_group: str, success_condition: dict, title: str,
+                   session_dir: str, total: int):
+
+    from playwright.sync_api import sync_playwright
+    from AI.navigation_AI.navigation_loop.navigation_loop import NavigationLoop
+    from AI.layer_tier2.base_persona import BasePersona
+    from AI.Auditor_AI.utils.s3_uploader import S3Uploader
+    from normalizer.mcp.web_normalizer.web_normalizer_incremental.web_normalizer_incremental import WebNormalizerIncremental
+    from engine.navigator_ai import NavigatorAI
+    from AI.navigation_AI.navigation_loop.navigator_guide import NavigatorGuide
+
+    # 경로 구성 (테스트 코드 test_real_navigation과 동일)
+    persona_dir = Path(session_dir) / age_group
+    sim_id = uuid.uuid4().hex[:6]
+    log_dir = str(persona_dir / f"sim_{sim_id}")
+
+    sim_status = "failed"
+
     try:
-        # ── Step 1: 상태 업데이트 ──
- 
-        # ── Step 2: 페르소나 생성 ──
-        from AI.layer_tier2.base_persona import BasePersona
+        # 의존성 생성 (테스트 코드 fixture들과 동일)
+        navigator_ai = NavigatorAI(log_dir=log_dir)
+        normalizer = WebNormalizerIncremental()
+        uploader = S3Uploader(bucket_name=os.getenv("S3_BUCKET"))
         persona = BasePersona(age_group)
- 
-        # ── Step 3: NavigationLoop 실행 ──
-        from AI.navigation_AI.navigation_loop import NavigationLoop
-        loop = NavigationLoop(
-            url=target_url,
-            task=task,
-            persona=persona,
-            success_condition=success_condition,
-        )
-        result = loop.run()
- 
-        # ── Step 4: S3 업로드 ──
-        # TODO: 실제 S3 업로드 로직 연결 (boto3)
-        s3_urls = _upload_to_s3(result, s3_prefix)
- 
-        return {
-            "status": "completed",
-            "age_group": age_group,
-            "s3_urls": s3_urls
-        }
- 
+
+        with sync_playwright() as p:
+            # 브라우저 창
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--no-sandbox',
+                ]
+            )
+            context = browser.new_context(
+                user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            )
+            page = context.new_page()
+            page.on("console", lambda msg: print(f"[JS] {msg.text}"))
+
+            # 1. guide 먼저
+            guide = NavigatorGuide(
+                page=page,
+                navigator_ai=navigator_ai,
+                db_path=DB_PATH,
+                uploader=uploader,
+            )
+            date_prefix = Path(session_dir).name
+            guide.run(goal=task, url=target_url, success_condition=success_condition, session_dir=session_dir, date_prefix=date_prefix)
+
+            # 2. loop 그 다음 (page.goto 없이)
+            loop = NavigationLoop(
+                page=page,
+                normalizer=normalizer,
+                navigator_ai=navigator_ai,
+                db_path=DB_PATH,
+                log_dir=log_dir,
+                session_dir=session_dir,
+                uploader=uploader,
+            )
+            loop.max_steps = 100
+            result = loop.run(task, persona, success_condition)
+
+            page.close()
+            context.close()
+            browser.close()
+
+        s3_urls = _upload_to_s3(result, log_dir)
+        sim_status = "completed"
+
     except Exception as e:
-        return {
-            "status": "failed",
-            "age_group": age_group,
-            "error": str(e)
-        }
- 
- 
-# ────────────────────────────────────────────
-# S3 업로드 헬퍼 (플레이스홀더)
-# 알고리즘 수정 완료 후 실제 구현 예정
-# ────────────────────────────────────────────
-def _upload_to_s3(result: dict, s3_prefix: str) -> dict:
-    """
-    시뮬레이션 결과를 S3에 업로드하고 URL 반환
- 
-    Args:
-        result: NavigationLoop 실행 결과
-        s3_prefix: S3 저장 경로 prefix
- 
-    Returns:
-        5개 파일의 S3 URL dict
-    """
+        print(f"[ERROR] {age_group} {sim_id}: {e}")
+        s3_urls = {}
+
+    finally:
+        # Redis atomic increment로 completed/failed 갱신
+        r = get_redis()
+        if sim_status == "completed":
+            new_completed = r.hincrby(f"counter:{job_id}", "completed", 1)
+            new_failed = int(r.hget(f"counter:{job_id}", "failed") or 0)
+        else:
+            new_failed = r.hincrby(f"counter:{job_id}", "failed", 1)
+            new_completed = int(r.hget(f"counter:{job_id}", "completed") or 0)
+
+        r.expire(f"counter:{job_id}", 3600)
+        update_status(job_id, new_completed, total, new_failed)
+
+        # 마지막 태스크면 Step Functions 트리거 (autouse fixture와 동일)
+        if new_completed + new_failed >= total:
+            pass #_trigger_step_functions(session_dir)
+
+    return {"status": sim_status, "age_group": age_group, "s3_urls": s3_urls}
+
+
+def _upload_to_s3(result: dict, log_dir: str) -> dict:
     bucket = os.getenv("S3_BUCKET", "ux-swarm-bucket")
- 
-    # TODO: 실제 boto3 업로드 로직으로 교체
+    s3_prefix = f"raw/{log_dir}"
+
+    # TODO: boto3 실제 업로드로 교체
     return {
         "final_issues": f"s3://{bucket}/{s3_prefix}/final_issues.json",
         "heatmap_aggregation": f"s3://{bucket}/{s3_prefix}/heatmap_aggregation.json",
         "summary_aggregation": f"s3://{bucket}/{s3_prefix}/summary_aggregation.json",
         "wcag": f"s3://{bucket}/{s3_prefix}/wcag.json",
-        "fixes": f"s3://{bucket}/{s3_prefix}/fixes/{{encoded_url}}/fix.json",
+        "fixes": f"s3://{bucket}/{s3_prefix}/fixes/fix.json",
     }
