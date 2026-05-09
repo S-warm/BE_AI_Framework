@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+
+  # ────────────────────────────────────────────
+  # Redis - 작업 큐 + 상태 저장소
+  # ────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: always
+
+  # ────────────────────────────────────────────
+  # FastAPI - REST API 서버
+  # Spring이 여기로 요청 보냄
+  # ────────────────────────────────────────────
+  api:
+    build: .
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app/src
+      - REDIS_URL=redis://redis:6379/0
+      - S3_BUCKET=${S3_BUCKET}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+    depends_on:
+      - redis
+    restart: always
+
+  # ────────────────────────────────────────────
+  # Celery Worker - 시뮬레이션 실제 실행
+  # 10개 동시 실행 (concurrency=10)
+  # ────────────────────────────────────────────
+  worker:
+    build: .
+    command: sh -c "PYTHONPATH=/app/src celery -A api.worker worker --concurrency=10 --loglevel=info"
+    environment:
+      - PYTHONPATH=/app/src
+      - REDIS_URL=redis://redis:6379/0
+      - S3_BUCKET=${S3_BUCKET}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - PYTHONPATH=/app
+    depends_on:
+      - redis
+    restart: always

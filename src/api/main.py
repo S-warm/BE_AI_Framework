@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes import router
+from api.routes import router
 
 # ────────────────────────────────────────────
 # FastAPI 앱 초기화

@@ -12,14 +12,14 @@ import json
 from fastapi import APIRouter, HTTPException
 from slugify import slugify
 
-from schemas import (
+from api.schemas import (
     SimulationRequest,
     SimulationStartResponse,
     SimulationStatusResponse,
     SimulationResultResponse,
     S3Results,
 )
-from worker import celery_app, run_simulation, update_status
+from api.worker import celery_app, run_simulation, update_status
 
 router = APIRouter()
 
