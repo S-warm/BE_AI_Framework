@@ -152,6 +152,7 @@ class WebNormalizerIncremental(WebNormalizer):
                 page.wait_for_selector('body', timeout=5000)
                 if not self.mutation_observer.is_installed() or page.url != (self.last_url or ''):
                     self.mutation_observer.setup_observer(page)
+                    page.evaluate("window.scrollTo(0, 0)")
             
             # Step 1-2: 부모 클래스의 전체 파싱 실행
             all_nodes = super().normalize(page)

@@ -106,8 +106,8 @@ class ActionExecutor:
         
         node = node_map[node_id]
         
-        # text 타입은 클릭 차단
-        if node.type == 'text':
+        # text 타입은 클릭 차단 (단, cursor:pointer인 경우 예외)
+        if node.type == 'text' and not node.properties.get('is_interactive', False):
             return {
                 'success': False,
                 'action': 'click',
@@ -131,6 +131,14 @@ class ActionExecutor:
             context = self.page.context
             pages_before = len(context.pages)
             print(f"[EXEC_CLICK] before: {pages_before} pages, xpath={xpath[:60]}")
+            
+            self.page.evaluate("""
+                (xpath) => {
+                    const el = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                    if (el) el.scrollIntoView({block: 'start'});
+                }
+            """, xpath)
+            self.page.wait_for_timeout(300)
             
             self.page.click(f"xpath={xpath}", timeout=5000)
             self.page.wait_for_timeout(200)

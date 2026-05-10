@@ -104,11 +104,12 @@ def build_prompt(
 2. {excluded} tier 요소는 선택 불가
 3. element_id는 [인덱스] 번호 사용
 4. 현재 tier 요소 중 목표와 직접 관련된 요소가 없으면 반드시 declare_failure
-    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button)도 목표와 관련된 요소로 간주
+    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button, cursor:pointer인 container/text)도 목표와 관련된 요소로 간주
     ※ declare_failure 선택 시 reasoning에 반드시 포함:
        1. 찾으려 했던 요소가 무엇인지 (목표 기준)
        2. 상 tier에 있던 요소들이 왜 목표와 무관한지
     ※ 링크/버튼 텍스트가 목표에서 언급된 항목과 의미적으로 일치하면 클릭 가능 (대소문자 무시)
+    ※ 현재 페이지가 목표와 관련 없다고 판단되면 go_back 선택 가능
 5. 목표와 무관한 요소는 절대 클릭 금지
 
 **{current_tier} tier 요소** (탐색 대상):
@@ -308,11 +309,12 @@ def build_incremental_prompt(
    - "declare_success": 성공 조건 충족 시
    - "declare_failure": 목표와 관련된 요소 없을 때
 5. 현재 tier 요소 중 목표와 직접 관련된 요소가 없으면 반드시 declare_failure
-    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button)도 목표와 관련된 요소로 간주
+    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button, cursor:pointer인 container/text)도 목표와 관련된 요소로 간주
     ※ declare_failure 선택 시 reasoning에 반드시 포함:
        1. 찾으려 했던 요소가 무엇인지 (목표 기준)
        2. 상 tier에 있던 요소들이 왜 목표와 무관한지
-    ※ 링크/버튼 텍스트가 목표에서 언급된 항목과 의미적으로 일치하면 클릭 가능 (대소문자 무시)
+    ※ 링크/버튼 텍스트가 목표 제목과 정확히 일치해야만 클릭 가능. 키워드 일부만 포함된 경우는 목표와 무관한 요소로 간주
+    ※ 현재 페이지가 목표와 관련 없다고 판단되면 go_back 선택 가능
 6. 목표와 무관한 요소는 절대 클릭 금지
 
 **경고**: 요소가 없거나 클릭만 했다고 declare_success 하지 말 것. 반드시 성공 조건이 실제로 충족된 경우만

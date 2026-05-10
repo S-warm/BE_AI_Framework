@@ -37,6 +37,11 @@ class TypeExtractor:
                 elif role in ['textbox', 'searchbox']:
                     return 'input'
             
+            # 1.5 cursor: pointer면 button으로 승격 -> 단 이미지나 호버 같은 이상한거 클릭할수있음 문제되면 수정 필요
+            properties = raw_data.get('properties', {})
+            if properties.get('cursor') == 'pointer':
+                return 'button'
+            
             # 2. 명확한 태그 기반 판단 (딕셔너리 이용)
             type_map = {
                 'button': 'button',

@@ -218,10 +218,15 @@ class TestNavigatorGuideE2E:
         goal = "매장에서 먹고, 아메리카노 선택해서 온도 아이스, 농도 샷추가, 컵 종이컵 버튼 선택하고 장바구니담기 버튼 선택하고, 포인트 번호는 010-1234-1234, KT 멤버십 선택, 신용카드로 결제해줘. 결제 완료 팝업이 뜨면 확인 버튼 눌러줘."
         success_condition = {'path': '/payment'}
         
+        url = "https://test-web-fe-shopping-mall.vercel.app/shop"
+        goal = "상단 네비게이션에서 'Bottom' 카테고리를 클릭해. 상품 목록에서 'Cloud Soft Fleece Pants'를 찾아 클릭해. 상품 상세 페이지에서 '옵션을 선택해 주세요' 드롭박스를 먼저 클릭해서 열면 내부에 색상과 사이즈 드롭박스가 나타나. 색상 드롭박스에서 'White'를 선택하고, 사이즈 드롭박스에서 'Free'를 선택한 후 '바로구매' 버튼을 클릭해."
+        success_condition = {'path': '/payment'}
+        
         url = "https://www.dbpia.co.kr/"
         goal = "검색창에 '파운데이션 모델' 검색하고 '프롬프트 기반 감성 분석에서 파운데이션 모델의 설명 가능성 및 효율성 비교 연구' 게시글 링크 클릭해줘"
         success_condition = {'path': '/journal/articleDetail', 'required_params': {'nodeId': 'NODE12728926'}}
         """
+        
         url = "https://test-web-fe-shopping-mall.vercel.app/shop"
         goal = "상단 네비게이션에서 'Bottom' 카테고리를 클릭해. 상품 목록에서 'Cloud Soft Fleece Pants'를 찾아 클릭해. 상품 상세 페이지에서 '옵션을 선택해 주세요' 드롭박스를 먼저 클릭해서 열면 내부에 색상과 사이즈 드롭박스가 나타나. 색상 드롭박스에서 'White'를 선택하고, 사이즈 드롭박스에서 'Free'를 선택한 후 '바로구매' 버튼을 클릭해."
         success_condition = {'path': '/payment'}

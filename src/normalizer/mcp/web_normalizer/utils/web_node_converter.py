@@ -64,4 +64,8 @@ class WebNodeConverter:
         
         """
         
+        properties = raw_data.get('properties', {})
+        if properties.get('cursor') == 'pointer':
+            return True
+        
         return False

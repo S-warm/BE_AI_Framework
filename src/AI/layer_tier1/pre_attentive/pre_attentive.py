@@ -574,7 +574,8 @@ def apply_preattentive_priority(
         if node.type in INTERACTIVE_TYPES:
             priority *= 2.0
         elif node.type == 'container':
-            priority *= 0.3
+            if not node.properties.get('is_interactive', False):
+                priority *= 0.3
         
         # 범위 제한
         priority = max(0.0, min(1.0, priority))
