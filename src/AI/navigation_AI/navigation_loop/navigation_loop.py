@@ -300,7 +300,15 @@ class NavigationLoop:
                 
                 if not delta and self.normalizer.last_url is None:
                     print("[WEAK_DELTA_FALLBACK] 전체 파싱으로 전환")
-                    section_navigator = None
+                    prev_section_idx = section_navigator.current_section_idx if section_navigator else 0
+                    self.parsing_cache.delete(self.page.url)  # SPA 전환 후 캐시 무효화
+                    nodes = self._parse_with_cache(self.page.url)
+                    viewport_h = self.page.viewport_size.get('height', 1080) if self.page.viewport_size else 1080
+                    new_sections = self._process_tier1(nodes, viewport_h, self.persona)
+                    section_navigator = SectionNavigator(new_sections, self.fatigue_manager)
+                    section_navigator.current_section_idx = prev_section_idx + 1
+                    section_navigator.current_tier_idx = 0
+                    print(f"[WEAK_DELTA_FALLBACK] section_idx={section_navigator.current_section_idx}부터 재개")
                     continue
                 
                 # 정상 증분: ContextMemory에 추가 후 증분 서브루프로 진입
@@ -363,40 +371,41 @@ class NavigationLoop:
         return self.page.url != self.current_url
 
     def _parse_with_cache(self, url: str) -> List[StandardUINode]:
-        """전체 파싱 (캐시 우선)"""
         cached = self.parsing_cache.get(url)
         if cached:
+            matches = [n for n in cached if 'Cloud' in (n.content or '') or 'Fleece' in (n.content or '')]
+            print(f"[TARGET_SEARCH] 캐시히트 - 'Cloud/Fleece' {len(matches)}개: {[(n.type, n.content[:30]) for n in matches]}")
             return cached
 
         nodes = self.normalizer.normalize(self.page)
         self.parsing_cache.save(url, nodes)
         
-        # 디버그: 목표 논문 추적
-        target_kw = "프롬프트 기반 감성"
-        matches = [n for n in nodes if target_kw in (n.content or "")]
-        print(f"[TRACK_NORMALIZE] 전체 {len(nodes)}개 중 매칭 {len(matches)}개")
-        for m in matches:
-            print(f"  - type={m.type}, y={m.properties.get('y')}, content={m.content[:60]}")
-            
-        links = [n for n in nodes if n.type == 'link']
-        print(f"[TRACK_NORMALIZE] link 타입 {len(links)}개")
+        matches = [n for n in nodes if 'Cloud' in (n.content or '') or 'Fleece' in (n.content or '')]
+        print(f"[TARGET_SEARCH] 신규파싱 - 'Cloud/Fleece' {len(matches)}개: {[(n.type, n.content[:30]) for n in matches]}")
         
-        # 여기에 추가
-        img = [n for n in nodes if n.type == 'image']
-        if img:
-            print(hasattr(img[0], 'image_analysis'))
-            print(img[0].properties.get('image_analysis'))
-            
         return nodes
     
     def _is_weak_delta(self, delta: List[StandardUINode]) -> bool:
         if not delta or len(delta) <= 3:
             print(f"[WEAK_DELTA] True - nodes={len(delta) if delta else 0}")
             return True
+        
         viewport_h = self.page.viewport_size.get('height', 1080) if self.page.viewport_size else 1080
         visible = [n for n in delta if 0 <= n.properties.get('y', -1) <= viewport_h]
-        print(f"[WEAK_DELTA] nodes={len(delta)}, visible={len(visible)}, result={len(visible)==0}")
-        return len(visible) == 0
+        if len(visible) == 0:
+            print(f"[WEAK_DELTA] True - no visible nodes")
+            return True
+        
+        # 리스트 구조 감지: text 없고 container 3개 이상
+        has_text = any(n.type == 'text' for n in delta)
+        container_count = sum(1 for n in delta if n.type == 'container')
+        text_count = sum(1 for n in delta if n.type == 'text')
+        if container_count >= 3 and text_count <= 1:
+            print(f"[WEAK_DELTA] True - list structure detected (containers={container_count}, no text)")
+            return True
+        
+        print(f"[WEAK_DELTA] False - nodes={len(delta)}, visible={len(visible)}")
+        return False
 
     def _parse_incremental_with_cache(self, result: Dict, node: Optional[StandardUINode] = None, clicked_xpath: str = None) -> List[StandardUINode]:
         print(f"clicked_xpath: {clicked_xpath}")
@@ -419,11 +428,12 @@ class NavigationLoop:
 
         self.page.wait_for_timeout(1000) # 렌더링 전에 파싱되는거 방식 시간 텀 줌
         delta = self.normalizer.normalize(self.page, clicked_xpath)
+        print(f"[DELTA_TYPES] {[(n.type, n.content[:20] if n.content else '') for n in delta]}")
         
         if self._is_weak_delta(delta):
             print("[WEAK_DELTA] 증분 빈약 → 전체 파싱 fallback")
             self.normalizer.last_url = None
-            self.parsing_cache.delete(self.page.url)
+            # self.parsing_cache.delete(self.page.url)
             return []
         
         if delta:
@@ -477,7 +487,15 @@ class NavigationLoop:
 
         sections_processed = {}
         for section_name, raw_nodes in sections_raw.items():
+            if section_name == 'nav':
+                for n in raw_nodes:
+                    print(f"[NAV_RAW] {n.type} '{n.content}' y={n.properties.get('y')} h={n.properties.get('height')}")
+                    
             classified = classify_by_percentile(raw_nodes)
+            
+            if section_name == 'nav':
+                for n in classified:
+                    print(f"[NAV_CLASSIFIED] {n.type} '{n.content}' tier={n.properties.get('tier')}")
             
             # 디버그: tier 분류 후
             matches = [n for n in classified if target_kw in (n.content or "")]
@@ -508,6 +526,11 @@ class NavigationLoop:
             for i, node in enumerate(v):
                 if node.properties.get('tier') == '상':
                     print(f"  [{k}][상][{i}] {node.type} '{node.content[:30] if node.content else '[no text]'}'")
+
+        for k, v in sections_processed.items():
+            for n in v:
+                if 'Cloud' in (n.content or '') or 'Fleece' in (n.content or ''):
+                    print(f"[TARGET_TIER] {k} tier={n.properties.get('tier')} type={n.type} content={n.content[:40]}")
 
         return sections_processed
 

@@ -138,8 +138,8 @@ class NavigatorGuide:
         print(f"목표가 너무 모호하거나 달성 불가능할 수 있습니다.")
         print(f"{'='*50}")
         
-        new_goal = input("새로운 목표를 입력하세요: ").strip()
-        return new_goal
+        print(f"[GUIDE FAIL] {self.MAX_ATTEMPTS}회 시도 모두 실패")
+        return goal
     
     
 """

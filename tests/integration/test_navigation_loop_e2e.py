@@ -308,6 +308,7 @@ class TestNavigationLoopE2E:
         loop.max_steps = 100
 
         playwright_browser.goto(url, wait_until="networkidle")
+        print(f"[GOTO] actual url={playwright_browser.url}")
         start_time = time.time()
         result = loop.run(goal, persona, success_condition)
         elapsed_time = time.time() - start_time

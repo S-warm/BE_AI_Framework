@@ -458,7 +458,6 @@ class MutationObserver:
                 };
                 
                 const filteredAdded = added
-                    .filter(isRelated)
                     .filter(el => {
                         const rect = el.getBoundingClientRect();
                         if (rect.width > 0 && rect.height > 0) return true;

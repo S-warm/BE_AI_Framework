@@ -123,8 +123,8 @@ class IncrementalScanner:
             tool_map = {
                 'click': 'click_element',
                 'close': 'click_element',
-                'success': 'declare_success',
-                'failure': 'declare_failure'
+                'declare_success': 'declare_success',
+                'declare_failure': 'declare_failure'
             }
             tool_name = tool_map.get(action_type, 'click_element')
             

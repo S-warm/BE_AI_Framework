@@ -570,7 +570,7 @@ def apply_preattentive_priority(
         )
         
         # === Step 3.5: 인터랙션 요소 보너스 / 컨테이너 패널티 ===
-        INTERACTIVE_TYPES = {'button', 'link', 'input', 'select', 'textarea', 'checkbox', 'radio'}
+        INTERACTIVE_TYPES = {'button', 'link', 'input', 'select', 'textarea', 'checkbox', 'radio', 'image'}
         if node.type in INTERACTIVE_TYPES:
             priority *= 2.0
         elif node.type == 'container':
