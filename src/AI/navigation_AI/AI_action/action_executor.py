@@ -141,7 +141,7 @@ class ActionExecutor:
             self.page.wait_for_timeout(300)
             
             self.page.click(f"xpath={xpath}", timeout=5000)
-            self.page.wait_for_timeout(200)
+            self.page.wait_for_timeout(500)
             
             new_page = None
             for i in range(20):
@@ -296,7 +296,8 @@ class ActionExecutor:
             }
         """
         try:
-            self.page.go_back(wait_until='networkidle', timeout=5000)
+            self.page.go_back(timeout=5000)
+            self.page.wait_for_timeout(1000)
             
             return {
                 'success': True,

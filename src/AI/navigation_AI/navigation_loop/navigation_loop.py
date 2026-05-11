@@ -300,13 +300,20 @@ class NavigationLoop:
                 
                 if not delta and self.normalizer.last_url is None:
                     print("[WEAK_DELTA_FALLBACK] 전체 파싱으로 전환")
+                    self.context_memory.clear_incremental()
+                    self.incremental_cache.clear_all() # 캐시도 클리어
+                    if self._url_changed():
+                        # URL 변경 → 메인 루프에 위임
+                        section_navigator = None
+                        continue
+                    # 같은 URL일 때만 기존 로직
                     prev_section_idx = section_navigator.current_section_idx if section_navigator else 0
-                    self.parsing_cache.delete(self.page.url)  # SPA 전환 후 캐시 무효화
+                    self.parsing_cache.delete(self.page.url)
                     nodes = self._parse_with_cache(self.page.url)
                     viewport_h = self.page.viewport_size.get('height', 1080) if self.page.viewport_size else 1080
                     new_sections = self._process_tier1(nodes, viewport_h, self.persona)
                     section_navigator = SectionNavigator(new_sections, self.fatigue_manager)
-                    section_navigator.current_section_idx = prev_section_idx + 1
+                    section_navigator.current_section_idx = 0
                     section_navigator.current_tier_idx = 0
                     print(f"[WEAK_DELTA_FALLBACK] section_idx={section_navigator.current_section_idx}부터 재개")
                     continue
@@ -400,7 +407,8 @@ class NavigationLoop:
         has_text = any(n.type == 'text' for n in delta)
         container_count = sum(1 for n in delta if n.type == 'container')
         text_count = sum(1 for n in delta if n.type == 'text')
-        if container_count >= 3 and text_count <= 1:
+        button_count = sum(1 for n in delta if n.type == 'button')
+        if container_count >= 3 and text_count <= 1 and button_count <= 2:
             print(f"[WEAK_DELTA] True - list structure detected (containers={container_count}, no text)")
             return True
         
@@ -669,7 +677,8 @@ class NavigationLoop:
             action=result['action'],
             element_id=node_id,
             element_text=reasoning,
-            result='success' if result['success'] else 'failure'
+            result='success' if result['success'] else 'failure',
+            error=result.get('error') if not result['success'] else None
         )
         
         # 로깅
@@ -767,6 +776,7 @@ class NavigationLoop:
                 f"{action['step']}. {action['action']} "
                 f"{action['element_id']} '{action['element_text']}' "
                 f"→ {action['result']}"
+                + (f" (실패이유: {action['error']})" if action.get('error') else "")
             )
         return "\n".join(lines)
 

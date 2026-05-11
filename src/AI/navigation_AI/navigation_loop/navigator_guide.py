@@ -26,7 +26,7 @@ from fix_code.DOM_extractors import DOMExtractor
 
 class NavigatorGuide:
 
-    MAX_ATTEMPTS = 1 # 최대 실행 횟수 / 너무 길면 줄이기
+    MAX_ATTEMPTS = 3 # 최대 실행 횟수 / 너무 길면 줄이기
 
     def __init__(self, page: Page, navigator_ai, db_path: Optional[str] = None, uploader: Optional[S3Uploader] = None):
         self.page = page
@@ -113,7 +113,7 @@ class NavigatorGuide:
             uploader=self.uploader,
             session_dir=self.session_dir,
         )
-        loop.max_steps = 30 # 최대 스텝 수
+        loop.max_steps = 35 # 최대 스텝 수
         
         result = loop.run(goal=goal, persona=self.persona, success_condition=self.success_condition, warmup=True)
         

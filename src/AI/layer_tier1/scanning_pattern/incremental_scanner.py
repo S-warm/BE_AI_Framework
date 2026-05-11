@@ -60,7 +60,9 @@ class IncrementalScanner:
             }
         
         # 2. Tier 분류
-        classified_nodes = classify_by_percentile(top_nodes)
+        for node in top_nodes:
+            node.properties['tier'] = '상'
+        classified_nodes = top_nodes
         
         # 3. Y축 정렬
         sorted_nodes = sort_by_y_position(classified_nodes)

@@ -42,7 +42,7 @@ class NavigationMemory:
         self.actions: List[Dict] = []
     
     def add_action(self, action: str, element_id: str, 
-            element_text: str, result: str) -> None:
+            element_text: str, result: str, error: str = None) -> None:
         """
         행동 추가
         
@@ -61,6 +61,7 @@ class NavigationMemory:
             "element_id": element_id,
             "element_text": element_text,
             "result": result,
+            "error": error,
             "timestamp": datetime.now().isoformat()
         })
     

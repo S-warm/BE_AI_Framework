@@ -5,8 +5,6 @@
 TODO 하나 있음 — task 문자열 생성 로직 나중에 개선 필요.
 """
 
-
-
 import uuid
 import json
 import redis
@@ -41,8 +39,8 @@ def get_redis():
 async def start_simulation(request: SimulationRequest):
     job_id = str(uuid.uuid4())
 
-    # session_dir 생성 (테스트 코드 session_dir fixture와 동일한 구조)
-    session_dir = f"logs/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+    title_slug = slugify(request.title) or "untitled"
+    session_dir = f"{title_slug}/logs/{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
 
     age_counts = {
         "age_count_10": request.age_count_10,
@@ -58,11 +56,8 @@ async def start_simulation(request: SimulationRequest):
     if total == 0:
         raise HTTPException(status_code=400, detail="페르소나 수가 0입니다.")
 
-    # Redis에 초기 상태 저장
     r = get_redis()
     r.set(f"status:{job_id}", f"0|{total}|0", ex=3600)
-
-    title_slug = slugify(request.title) or "untitled"
 
     for field, age_group in AGE_MAP.items():
         count = age_counts[field]

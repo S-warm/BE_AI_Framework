@@ -219,7 +219,7 @@ class TestNavigatorGuideE2E:
         success_condition = {'path': '/payment'}
         
         url = "https://test-web-fe-shopping-mall.vercel.app/shop"
-        goal = "상단 네비게이션에서 'Bottom' 카테고리를 클릭해. 상품 목록에서 'Cloud Soft Fleece Pants'를 찾아 클릭해. 상품 상세 페이지에서 '옵션을 선택해 주세요' 드롭박스를 먼저 클릭해서 열면 내부에 색상과 사이즈 드롭박스가 나타나. 색상 드롭박스에서 'White'를 선택하고, 사이즈 드롭박스에서 'Free'를 선택한 후 '바로구매' 버튼을 클릭해."
+        goal = "상단 네비게이션에서 'Bottom' 카테고리를 클릭해. 상품 목록에서 'Cloud Soft Fleece Pants'를 찾아 클릭해. 상품 상세 페이지에서 색상 드롭박스 클릭해서 화이트, 사이즈 드롭박스 클릭해서 free 선택하고, '바로구매' 버튼을 클릭해."
         success_condition = {'path': '/payment'}
         
         url = "https://www.dbpia.co.kr/"
@@ -228,7 +228,7 @@ class TestNavigatorGuideE2E:
         """
         
         url = "https://test-web-fe-shopping-mall.vercel.app/shop"
-        goal = "상단 네비게이션에서 'Bottom' 카테고리를 클릭해. 상품 목록에서 'Cloud Soft Fleece Pants'를 찾아 클릭해. 상품 상세 페이지에서 '옵션을 선택해 주세요' 드롭박스를 먼저 클릭해서 열면 내부에 색상과 사이즈 드롭박스가 나타나. 색상 드롭박스에서 'White'를 선택하고, 사이즈 드롭박스에서 'Free'를 선택한 후 '바로구매' 버튼을 클릭해."
+        goal = "상단 네비게이션에서 'Bottom' 카테고리를 클릭해. 상품 목록에서 'Cloud Soft Fleece Pants'를 찾아 클릭해. 상품 상세 페이지에서 색상 드롭박스 클릭해서 화이트, 사이즈 드롭박스 클릭해서 free 선택하고, '바로구매' 버튼을 클릭해."
         success_condition = {'path': '/payment'}
         
         
@@ -268,7 +268,7 @@ class TestNavigationLoopE2E:
     @pytest.mark.parametrize("url,goal,persona,success_condition", [
         pytest.param(
             "https://test-web-fe-shopping-mall.vercel.app/shop",
-            "상단 네비게이션에서 'Bottom' 카테고리를 클릭해. 상품 목록에서 'Cloud Soft Fleece Pants'를 찾아 클릭해. 상품 상세 페이지에서 '옵션을 선택해 주세요' 드롭박스를 먼저 클릭해서 열면 내부에 색상과 사이즈 드롭박스가 나타나. 색상 드롭박스에서 'White'를 선택하고, 사이즈 드롭박스에서 'Free'를 선택한 후 '바로구매' 버튼을 클릭해.",
+            "상단 네비게이션에서 'Bottom' 카테고리를 클릭해. 상품 목록에서 'Cloud Soft Fleece Pants'를 찾아 클릭해. 상품 상세 페이지에서 색상 드롭박스 클릭해서 화이트, 사이즈 드롭박스 클릭해서 free 선택하고, '바로구매' 버튼을 클릭해.",
             BasePersona('20s'),
             {'path': '/payment'},
             id="shopping_20s"

@@ -341,7 +341,7 @@ class MutationObserver:
                             mutation.addedNodes.forEach(node => {
                                 if (node.nodeType === 1) {
                                     window.__ui_delta_buffer__.add(node);
-                                    node.querySelectorAll('a, button, input, select, li').forEach(child => {
+                                    node.querySelectorAll('a, button, input, select, li, div').forEach(child => {
                                         window.__ui_delta_buffer__.add(child);
                                     });
                                 }
@@ -370,7 +370,7 @@ class MutationObserver:
                                 const style = window.getComputedStyle(el);
                                 if (style.display !== 'none' && style.visibility !== 'hidden') {
                                     window.__ui_delta_buffer__.add(el);
-                                    el.querySelectorAll('a, button, input, select, li').forEach(child => {
+                                    el.querySelectorAll('a, button, input, select, li, div').forEach(child => {
                                         window.__ui_delta_buffer__.add(child);
                                     });
                                 }
