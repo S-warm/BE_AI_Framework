@@ -142,7 +142,7 @@ class ScreenshotCache:
             url_hash = self._get_url_hash(url)
             slug = re.sub(r'https?://', '', url)
             slug = re.sub(r'[^\w\-]', '_', slug)[:200]
-            s3_key = f"raw/logs/{date_prefix}/screenshots/{slug}.png"
+            s3_key = f"raw/{date_prefix}/screenshots/{slug}.png"
             local_path = Path(f"/tmp/{url_hash}.png")
             local_path.write_bytes(png_bytes)
             if uploader.upload_file(str(local_path), s3_key):

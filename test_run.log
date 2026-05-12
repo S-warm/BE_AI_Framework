@@ -1,0 +1,768 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0 -- /Users/hwangpilho/Desktop/Capstone/swarm/venv/bin/python3.11
+cachedir: .pytest_cache
+rootdir: /Users/hwangpilho/Desktop/Capstone/swarm
+configfile: pytest.ini
+plugins: anyio-4.13.0
+collecting ... collected 2 items
+
+tests/integration/test_navigation_loop_e2e.py::TestNavigatorGuideE2E::test_navigator_guide_warmup ✅ Database initialized: test_cache.db
+✅ Database initialized: /Users/hwangpilho/Desktop/Capstone/swarm/src/AI/cache/cache.db
+
+[GUIDE] 시도 1/3
+✅ 전체 캐시 삭제 완료
+📏 프롬프트 길이: 1202 chars
+📏 예상 토큰: ~300
+
+📋 프롬프트 내용:
+
+사용자가 입력한 목표를 분석하여 다음 JSON 형식으로 변환하세요.
+
+**응답 형식**:
+{
+    "goal": "원본 목표 그대로",
+    "final_target": "최종적으로 달성해야 할 것 (간결하게)",
+    "success_condition": "성공 판단 조건 (1-2문장, 구체적으로)"
+}
+
+**작성 규칙**:
+1. final_target: 목표의 핵심 결과물 (예: "링크 클릭", "주문 완료", "가격 확인")
+2. success_condition: Navigator AI가 declare_success를 호출할 시점을 명확히 서술
+   - "~클릭하기" → "해당 요소 클릭 완료 시 즉시 declare_success"
+   - "~확인하기" → "해당 요소 발견 시 declare_success"
+   - "~완료하기" → "완료 페이지 도달 또는 완료 메시지 확인 시 declare_success"
+3. success_condition에 "내용이 표시된 요소
+
+🤖 AI 원본 응답:
+{
+    "goal": "사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.",
+    "final_target": "'Sauce Labs Backpack' 상품 클릭",
+    "success_condition": "'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success"
+}
+
+📦 파싱된 결과: {'goal': "사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.", 'final_target': "'Sauce Labs Backpack' 상품 클릭", 'success_condition': "'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success"}
+
+
+📋 파싱된 목표:
+  - final_target: 'Sauce Labs Backpack' 상품 클릭
+  - success_condition: 'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success
+
+[LOOP] step=0, url=https://www.saucedemo.com/
+[NAV_REBUILD] url_changed=False, nav_is_none=True
+Observer 미설치 → 전체 파싱
+=== 전체 파싱 ===
+Observer 미설치 → 전체 파싱
+[JS] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o
+[JS] Content is cached for offline use.
+[JS] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[JS] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[JS] 버퍼 초기화 완료
+[JS] 단일 추출 함수 준비 완료
+[JS] MutationObserver 설치 완료
+MutationObserver 설치 완료
+[BUFFER_CHECK] object
+캐시 구축 시작: 22개 노드
+캐시 구축 완료: 22개 저장됨
+✅ 캐시 저장: https://www.saucedemo.com/ (22개 노드)
+[TARGET_SEARCH] 신규파싱 - 'Cloud/Fleece' 0개: []
+[TRACK] after pre_attentive: 0개 매칭
+[TRACK] section=main_0: 0개 매칭
+[SECTIONS] ['main_0']
+  main_0: 22개
+  [main_0][상][11] input 'Username'
+  [main_0][상][13] input 'Password'
+  [main_0][상][15] button '[no text]'
+  [main_0][상][17] container '[no text]'
+  [main_0][상][18] container 'standard_user locked_out_user '
+  [main_0][상][19] container 'secret_sauce'
+  [main_0][상][20] text 'Accepted usernames are:'
+  [main_0][상][21] text 'Password for all users:'
+📏 프롬프트 길이: 2241 chars
+📏 예상 토큰: ~560
+
+📋 프롬프트 내용:
+
+당신은 현재 상 tier 요소만 탐색 중입니다.
+
+**목표**: 사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.
+
+        **성공 조건**: 'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success
+
+        **중요**: 최근_행동에서 목표를 달성했다면 즉시 declare_success 호출
+        
+
+
+**규칙**:
+1. 상 tier 요소만 found=True 가능
+2. 중/하 tier 요소는 선택 불가
+3. element_id는 [인덱스] 번호 사용
+4. 현재 tier 요소 중 목표와 직접 관련된 요소가 없으면 반드시 declare_failure
+    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button, cursor:p
+
+🤖 AI 원본 응답:
+{
+    "found": true,
+    "found_tier": "상",
+    "element_id": 0,
+    "action_type": "fill",
+    "text": "standard_user",
+    "reasoning": "사용자명 입력칸에 'standard_user'를 입력하기 위해 상 tier 요소를 찾았고, 해당 요소를 발견하여 입력을 수행합니다."
+}
+
+📦 파싱된 결과: {'found': True, 'found_tier': '상', 'element_id': 0, 'action_type': 'fill', 'text': 'standard_user', 'reasoning': "사용자명 입력칸에 'standard_user'를 입력하기 위해 상 tier 요소를 찾았고, 해당 요소를 발견하여 입력을 수행합니다."}
+
+[JS] [MUT] count: 1 buffer: 0
+[JS] [MUT_DETAIL] type: attributes target: INPUT added: 0 removed: 0 attr: value
+[JS] [MUT] count: 6 buffer: 0
+[JS] [MUT_DETAIL] type: attributes target: INPUT added: 0 removed: 0 attr: class
+[JS] [MUT_DETAIL] type: childList target: DIV added: 1 removed: 0 attr: null
+[JS]   [+0] nodeType:1, tag:svg, children:1
+[JS] [MUT_DETAIL] type: attributes target: INPUT added: 0 removed: 0 attr: class
+[JS] [MUT_DETAIL] type: childList target: DIV added: 1 removed: 0 attr: null
+[JS]   [+0] nodeType:1, tag:svg, children:1
+[JS] [MUT_DETAIL] type: childList target: DIV added: 1 removed: 0 attr: null
+[JS]   [+0] nodeType:1, tag:H3, children:1
+[JS] [MUT_DETAIL] type: attributes target: DIV added: 0 removed: 0 attr: class
+[LOOP] step=1, url=https://www.saucedemo.com/
+📏 프롬프트 길이: 2285 chars
+📏 예상 토큰: ~571
+
+📋 프롬프트 내용:
+
+당신은 현재 상 tier 요소만 탐색 중입니다.
+
+**목표**: 사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.
+
+        **성공 조건**: 'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success
+
+        **중요**: 최근_행동에서 목표를 달성했다면 즉시 declare_success 호출
+        
+
+
+**규칙**:
+1. 상 tier 요소만 found=True 가능
+2. 중/하 tier 요소는 선택 불가
+3. element_id는 [인덱스] 번호 사용
+4. 현재 tier 요소 중 목표와 직접 관련된 요소가 없으면 반드시 declare_failure
+    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button, cursor:p
+
+🤖 AI 원본 응답:
+{
+    "found": true,
+    "found_tier": "상",
+    "element_id": 1,
+    "action_type": "fill",
+    "text": "secret_sauce",
+    "reasoning": "비밀번호 입력칸에 'secret_sauce'를 입력하기 위해 상 tier 요소를 찾았고, 해당 요소가 존재하므로 입력을 수행합니다."
+}
+
+📦 파싱된 결과: {'found': True, 'found_tier': '상', 'element_id': 1, 'action_type': 'fill', 'text': 'secret_sauce', 'reasoning': "비밀번호 입력칸에 'secret_sauce'를 입력하기 위해 상 tier 요소를 찾았고, 해당 요소가 존재하므로 입력을 수행합니다."}
+
+[JS] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[JS] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[JS] [MUT] count: 1 buffer: 7
+[JS] [MUT_DETAIL] type: attributes target: INPUT added: 0 removed: 0 attr: value
+[JS] [MUT] count: 6 buffer: 7
+[JS] [MUT_DETAIL] type: childList target: DIV added: 0 removed: 1 attr: null
+[JS] [MUT_DETAIL] type: attributes target: INPUT added: 0 removed: 0 attr: class
+[JS] [MUT_DETAIL] type: childList target: DIV added: 0 removed: 1 attr: null
+[JS] [MUT_DETAIL] type: attributes target: INPUT added: 0 removed: 0 attr: class
+[JS] [MUT_DETAIL] type: childList target: DIV added: 0 removed: 1 attr: null
+[JS] [MUT_DETAIL] type: attributes target: DIV added: 0 removed: 0 attr: class
+[LOOP] step=2, url=https://www.saucedemo.com/
+📏 프롬프트 길이: 2329 chars
+📏 예상 토큰: ~582
+
+📋 프롬프트 내용:
+
+당신은 현재 상 tier 요소만 탐색 중입니다.
+
+**목표**: 사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.
+
+        **성공 조건**: 'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success
+
+        **중요**: 최근_행동에서 목표를 달성했다면 즉시 declare_success 호출
+        
+
+
+**규칙**:
+1. 상 tier 요소만 found=True 가능
+2. 중/하 tier 요소는 선택 불가
+3. element_id는 [인덱스] 번호 사용
+4. 현재 tier 요소 중 목표와 직접 관련된 요소가 없으면 반드시 declare_failure
+    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button, cursor:p
+
+🤖 AI 원본 응답:
+{
+    "found": true,
+    "found_tier": "상",
+    "element_id": 2,
+    "action_type": "click",
+    "reasoning": "LOGIN 버튼을 클릭하여 다음 단계로 진행합니다."
+}
+
+📦 파싱된 결과: {'found': True, 'found_tier': '상', 'element_id': 2, 'action_type': 'click', 'reasoning': 'LOGIN 버튼을 클릭하여 다음 단계로 진행합니다.'}
+
+[EXEC_CLICK] before: 1 pages, xpath=id("login-button")
+[JS] [MUT] count: 2 buffer: 7
+[JS] [MUT_DETAIL] type: childList target: DIV added: 0 removed: 1 attr: null
+[JS] [MUT_DETAIL] type: childList target: DIV added: 1 removed: 0 attr: null
+[JS]   [+0] nodeType:1, tag:DIV, children:2
+[JS] [MUT] count: 1 buffer: 109
+[JS] [MUT_DETAIL] type: attributes target: DIV added: 0 removed: 0 attr: hidden
+[EXEC_CLICK] no new tab after 2s, pages=1
+[URL_CHANGED] https://www.saucedemo.com/ → https://www.saucedemo.com/inventory.html
+[LOOP] step=3, url=https://www.saucedemo.com/inventory.html
+[NAV_REBUILD] url_changed=True, nav_is_none=True
+URL 변경 (https://www.saucedemo.com/ → https://www.saucedemo.com/inventory.html) → 전체 파싱
+=== 전체 파싱 ===
+URL 변경 (https://www.saucedemo.com/ → https://www.saucedemo.com/inventory.html) → 전체 파싱
+[JS] 버퍼 초기화 완료
+[JS] 단일 추출 함수 준비 완료
+[JS] MutationObserver 설치 완료
+MutationObserver 설치 완료
+[BUFFER_CHECK] object
+전체 페이지 스크린샷 촬영 중...
+스크린샷 완료: (1280, 1110)
+✅ 스크린샷 캐시 저장: https://www.saucedemo.com/inventory.html (327KB)
+캐시 구축 시작: 104개 노드
+캐시 구축 완료: 103개 저장됨
+✅ 캐시 저장: https://www.saucedemo.com/inventory.html (104개 노드)
+[TARGET_SEARCH] 신규파싱 - 'Cloud/Fleece' 2개: [('button', 'Sauce Labs Fleece Jacket'), ('button', 'Sauce Labs Fleece Jacket')]
+[TRACK] after pre_attentive: 0개 매칭
+[TRACK] section=main_0: 0개 매칭
+[TRACK] section=main_1: 0개 매칭
+[TRACK] section=footer: 0개 매칭
+[SECTIONS] ['main_0', 'main_1', 'footer']
+  main_0: 50개
+  main_1: 45개
+  footer: 9개
+  [main_0][상][9] link '[no text]'
+  [main_0][상][10] image 'Open Menu'
+  [main_0][상][14] button 'Name (A to Z)Name (A to Z)Name'
+  [main_0][상][15] button 'Name (A to Z)'
+  [main_0][상][16] button '[no text]'
+  [main_0][상][17] button '[no text]'
+  [main_0][상][18] button '[no text]'
+  [main_0][상][19] button '[no text]'
+  [main_0][상][20] button 'Sauce Labs Backpack'
+  [main_0][상][21] button 'Sauce Labs Bike Light'
+  [main_0][상][22] button 'Sauce Labs Backpack'
+  [main_0][상][23] button 'Sauce Labs Bike Light'
+  [main_0][상][26] button 'Add to cart'
+  [main_0][상][27] button 'Add to cart'
+  [main_0][상][28] button '[no text]'
+  [main_0][상][29] button '[no text]'
+  [main_0][상][30] button '[no text]'
+  [main_0][상][31] button '[no text]'
+  [main_0][상][32] button 'Sauce Labs Bolt T-Shirt'
+  [main_0][상][33] button 'Sauce Labs Fleece Jacket'
+  [main_0][상][34] button 'Sauce Labs Bolt T-Shirt'
+  [main_0][상][35] button 'Sauce Labs Fleece Jacket'
+  [main_0][상][39] button 'Add to cart'
+  [main_0][상][40] button 'Add to cart'
+  [main_0][상][41] button '[no text]'
+  [main_0][상][42] button '[no text]'
+  [main_0][상][43] button '[no text]'
+  [main_0][상][44] button '[no text]'
+  [main_0][상][45] button 'Sauce Labs Onesie'
+  [main_0][상][46] button 'Test.allTheThings() T-Shirt (R'
+  [main_0][상][47] button 'Sauce Labs Onesie'
+  [main_0][상][48] button 'Test.allTheThings() T-Shirt (R'
+  [main_1][상][0] container '[no text]'
+  [main_1][상][1] container '[no text]'
+  [main_1][상][2] container '[no text]'
+  [main_1][상][3] container '[no text]'
+  [main_1][상][4] container '[no text]'
+  [main_1][상][5] container '[no text]'
+  [main_1][상][6] container '[no text]'
+  [main_1][상][7] container '[no text]'
+  [main_1][상][8] container '[no text]'
+  [main_1][상][9] container '[no text]'
+  [main_1][상][10] container '[no text]'
+  [main_1][상][11] container '[no text]'
+  [main_1][상][12] container '[no text]'
+  [main_1][상][13] container '[no text]'
+  [main_1][상][14] container '[no text]'
+  [main_1][상][15] container 'carry.allTheThings() with the '
+  [main_1][상][16] container 'A red light isn't the desired '
+  [main_1][상][17] container '[no text]'
+  [main_1][상][18] container '[no text]'
+  [main_1][상][19] container '[no text]'
+  [main_1][상][20] container '[no text]'
+  [main_1][상][21] container '[no text]'
+  [main_1][상][22] container '[no text]'
+  [main_1][상][23] container '[no text]'
+  [main_1][상][24] container '[no text]'
+  [main_1][상][25] container '[no text]'
+  [main_1][상][26] container '[no text]'
+  [main_1][상][27] container 'It's not every day that you co'
+  [main_1][상][28] container '[no text]'
+  [main_1][상][29] container '[no text]'
+  [main_1][상][30] container '[no text]'
+  [main_1][상][31] container '[no text]'
+  [main_1][상][32] container '[no text]'
+  [main_1][상][33] container '[no text]'
+  [main_1][상][34] container '[no text]'
+  [main_1][상][35] container '[no text]'
+  [main_1][상][36] container '[no text]'
+  [main_1][상][37] container '[no text]'
+  [main_1][상][38] container 'This classic Sauce Labs t-shir'
+  [main_1][상][39] container '[no text]'
+  [main_1][상][40] container '$ 7.99'
+  [main_1][상][41] container '[no text]'
+  [main_1][상][42] container '$ 15.99'
+  [main_1][상][43] button 'Add to cart'
+  [main_1][상][44] button 'Add to cart'
+  [footer][상][3] button 'Twitter'
+  [footer][상][5] button 'Facebook'
+  [footer][상][7] button 'LinkedIn'
+[TARGET_TIER] main_0 tier=상 type=button content=Sauce Labs Fleece Jacket
+[TARGET_TIER] main_0 tier=상 type=button content=Sauce Labs Fleece Jacket
+📏 프롬프트 길이: 4307 chars
+📏 예상 토큰: ~1076
+
+📋 프롬프트 내용:
+
+당신은 현재 상 tier 요소만 탐색 중입니다.
+
+**목표**: 사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.
+
+        **성공 조건**: 'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success
+
+        **중요**: 최근_행동에서 목표를 달성했다면 즉시 declare_success 호출
+        
+
+
+**규칙**:
+1. 상 tier 요소만 found=True 가능
+2. 중/하 tier 요소는 선택 불가
+3. element_id는 [인덱스] 번호 사용
+4. 현재 tier 요소 중 목표와 직접 관련된 요소가 없으면 반드시 declare_failure
+    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button, cursor:p
+
+🤖 AI 원본 응답:
+{
+    "found": true,
+    "found_tier": "상",
+    "element_id": 8,
+    "action_type": "click",
+    "reasoning": "목표에 명시된 'Sauce Labs Backpack' 상품을 클릭하는 단계입니다."
+}
+
+📦 파싱된 결과: {'found': True, 'found_tier': '상', 'element_id': 8, 'action_type': 'click', 'reasoning': "목표에 명시된 'Sauce Labs Backpack' 상품을 클릭하는 단계입니다."}
+
+[EXEC_CLICK] before: 1 pages, xpath=/html[1]/body[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/d
+[JS] [MUT] count: 2 buffer: 0
+[JS] [MUT_DETAIL] type: childList target: DIV added: 0 removed: 1 attr: null
+[JS] [MUT_DETAIL] type: childList target: DIV added: 1 removed: 0 attr: null
+[JS]   [+0] nodeType:1, tag:DIV, children:2
+[JS] [MUT] count: 2 buffer: 41
+[JS] [MUT_DETAIL] type: childList target: DIV added: 0 removed: 1 attr: null
+[JS] [MUT_DETAIL] type: childList target: DIV added: 1 removed: 0 attr: null
+[JS]   [+0] nodeType:1, tag:DIV, children:2
+[JS] [MUT] count: 1 buffer: 41
+[JS] [MUT_DETAIL] type: attributes target: DIV added: 0 removed: 0 attr: hidden
+[JS] [MUT] count: 1 buffer: 41
+[JS] [MUT_DETAIL] type: attributes target: DIV added: 0 removed: 0 attr: hidden
+[JS] [MUT] count: 1 buffer: 41
+[JS] [MUT_DETAIL] type: attributes target: DIV added: 0 removed: 0 attr: hidden
+[JS] [MUT] count: 1 buffer: 41
+[JS] [MUT_DETAIL] type: attributes target: DIV added: 0 removed: 0 attr: hidden
+[EXEC_CLICK] no new tab after 2s, pages=1
+[URL_CHANGED] https://www.saucedemo.com/inventory.html → https://www.saucedemo.com/inventory-item.html?id=4
+[LOOP] step=4, url=https://www.saucedemo.com/inventory-item.html?id=4
+[AUTO_SUCCESS] URL 도달: https://www.saucedemo.com/inventory-item.html?id=4
+✅ 로그 저장: logs/2026-05-12_02-02-28/guide/attempt_1/AI-sess_ff507856.json
+[DEBUG] saved_path: logs/2026-05-12_02-02-28/guide/attempt_1/AI-sess_ff507856.json
+[s3_prefix]: raw/logs/2026-05-12_02-02-28
+[logs_dir]: logs/2026-05-12_02-02-28
+[GUIDE] 성공 (1회 시도)
+[WCAG] 검사 중: https://www.saucedemo.com/
+[WCAG] 검사 중: https://www.saucedemo.com/inventory.html
+[JS] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[TAGS] ['cat.forms', 'wcag2a', 'wcag412', 'section508', 'section508.22.n', 'TTv5', 'TT5.c', 'EN-301-549', 'EN-9.4.1.2', 'ACT']
+📏 프롬프트 길이: 178 chars
+📏 예상 토큰: ~44
+
+📋 프롬프트 내용:
+다음 WCAG 접근성 이슈 설명을 한국어로 번역해줘.
+심각도: Critical
+원문: Select element must have an accessible name
+
+규칙:
+1. 전문적이고 간결하게 (1-2문장)
+2. 어떤 사용자에게 영향을 주는지 포함
+3. JSON으로 응답: {"description": "..."}
+
+🤖 AI 원본 응답:
+{"description": "선택 요소는 접근 가능한 이름을 가져야 합니다. 이는 시각 장애인이나 스크린 리더를 사용하는 사용자에게 영향을 미치며, 이들이 선택 요소의 목적을 이해하는 데 필수적입니다."}
+
+📦 파싱된 결과: {'description': '선택 요소는 접근 가능한 이름을 가져야 합니다. 이는 시각 장애인이나 스크린 리더를 사용하는 사용자에게 영향을 미치며, 이들이 선택 요소의 목적을 이해하는 데 필수적입니다.'}
+
+[WCAG] 로컬 저장: /tmp/wcag_2026-05-12_02-02-28.json
+[WCAG] S3 업로드: raw/logs/2026-05-12_02-02-28/analyzed/wcag.json
+[DOM] 추출 중: https://www.saucedemo.com/
+[JS] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[DOM] S3 업로드: raw/logs/2026-05-12_02-02-28/dom/https%3A%2F%2Fwww.saucedemo.com%2F.json
+[DOM] _save 호출됨: https://www.saucedemo.com/
+[DOM] uploader: <AI.Auditor_AI.utils.s3_uploader.S3Uploader object at 0x10fb23810>
+[DOM] 추출 중: https://www.saucedemo.com/inventory.html
+[DOM] S3 업로드: raw/logs/2026-05-12_02-02-28/dom/https%3A%2F%2Fwww.saucedemo.com%2Finventory.html.json
+[DOM] _save 호출됨: https://www.saucedemo.com/inventory.html
+[DOM] uploader: <AI.Auditor_AI.utils.s3_uploader.S3Uploader object at 0x10fb23810>
+
+============================================================
+📊 NavigatorGuide 결과
+============================================================
+상태: success
+시도 횟수: 1
+실행 시간: 37.48초
+총 토큰: 6,084
+총 비용: $0.0011
+============================================================
+PASSED
+tests/integration/test_navigation_loop_e2e.py::TestNavigationLoopE2E::test_real_navigation[saucedemo_20s] 
+🌐 URL: https://www.saucedemo.com/
+🎯 목표: 사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.
+👤 Persona: <AI.layer_tier2.base_persona.BasePersona object at 0x10dd2fb50>
+[JS] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o
+[JS] Content is cached for offline use.
+[JS] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[JS] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[GOTO] actual url=https://www.saucedemo.com/
+📏 프롬프트 길이: 1202 chars
+📏 예상 토큰: ~300
+
+📋 프롬프트 내용:
+
+사용자가 입력한 목표를 분석하여 다음 JSON 형식으로 변환하세요.
+
+**응답 형식**:
+{
+    "goal": "원본 목표 그대로",
+    "final_target": "최종적으로 달성해야 할 것 (간결하게)",
+    "success_condition": "성공 판단 조건 (1-2문장, 구체적으로)"
+}
+
+**작성 규칙**:
+1. final_target: 목표의 핵심 결과물 (예: "링크 클릭", "주문 완료", "가격 확인")
+2. success_condition: Navigator AI가 declare_success를 호출할 시점을 명확히 서술
+   - "~클릭하기" → "해당 요소 클릭 완료 시 즉시 declare_success"
+   - "~확인하기" → "해당 요소 발견 시 declare_success"
+   - "~완료하기" → "완료 페이지 도달 또는 완료 메시지 확인 시 declare_success"
+3. success_condition에 "내용이 표시된 요소
+
+🤖 AI 원본 응답:
+{
+    "goal": "사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.",
+    "final_target": "'Sauce Labs Backpack' 상품 클릭",
+    "success_condition": "'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success"
+}
+
+📦 파싱된 결과: {'goal': "사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.", 'final_target': "'Sauce Labs Backpack' 상품 클릭", 'success_condition': "'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success"}
+
+
+📋 파싱된 목표:
+  - final_target: 'Sauce Labs Backpack' 상품 클릭
+  - success_condition: 'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success
+
+[LOOP] step=0, url=https://www.saucedemo.com/
+[NAV_REBUILD] url_changed=False, nav_is_none=True
+[TARGET_SEARCH] 캐시히트 - 'Cloud/Fleece' 0개: []
+[TRACK] after pre_attentive: 0개 매칭
+[TRACK] section=main_0: 0개 매칭
+[VISION_FILTER] main_0: 22 → 22 (20s)
+[TRACK] main_0 after persona: 0개 매칭
+[VISION_FILTER] main_0: 22 → 22 (20s)
+[SECTIONS] ['main_0']
+  main_0: 22개
+  [main_0][상][11] input 'Username'
+  [main_0][상][13] input 'Password'
+  [main_0][상][15] button '[no text]'
+  [main_0][상][17] container '[no text]'
+  [main_0][상][18] container 'standard_user locked_out_user '
+  [main_0][상][19] container 'secret_sauce'
+  [main_0][상][20] text 'Accepted usernames are:'
+  [main_0][상][21] text 'Password for all users:'
+📏 프롬프트 길이: 2241 chars
+📏 예상 토큰: ~560
+
+📋 프롬프트 내용:
+
+당신은 현재 상 tier 요소만 탐색 중입니다.
+
+**목표**: 사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.
+
+        **성공 조건**: 'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success
+
+        **중요**: 최근_행동에서 목표를 달성했다면 즉시 declare_success 호출
+        
+
+
+**규칙**:
+1. 상 tier 요소만 found=True 가능
+2. 중/하 tier 요소는 선택 불가
+3. element_id는 [인덱스] 번호 사용
+4. 현재 tier 요소 중 목표와 직접 관련된 요소가 없으면 반드시 declare_failure
+    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button, cursor:p
+
+🤖 AI 원본 응답:
+{
+    "found": true,
+    "found_tier": "상",
+    "element_id": 0,
+    "action_type": "fill",
+    "text": "standard_user",
+    "reasoning": "사용자명 입력칸에 'standard_user'를 입력하기 위해 상 tier 요소를 찾았고, 해당 요소를 발견하여 입력을 수행합니다."
+}
+
+📦 파싱된 결과: {'found': True, 'found_tier': '상', 'element_id': 0, 'action_type': 'fill', 'text': 'standard_user', 'reasoning': "사용자명 입력칸에 'standard_user'를 입력하기 위해 상 tier 요소를 찾았고, 해당 요소를 발견하여 입력을 수행합니다."}
+
+[LOOP] step=1, url=https://www.saucedemo.com/
+📏 프롬프트 길이: 2285 chars
+📏 예상 토큰: ~571
+
+📋 프롬프트 내용:
+
+당신은 현재 상 tier 요소만 탐색 중입니다.
+
+**목표**: 사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.
+
+        **성공 조건**: 'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success
+
+        **중요**: 최근_행동에서 목표를 달성했다면 즉시 declare_success 호출
+        
+
+
+**규칙**:
+1. 상 tier 요소만 found=True 가능
+2. 중/하 tier 요소는 선택 불가
+3. element_id는 [인덱스] 번호 사용
+4. 현재 tier 요소 중 목표와 직접 관련된 요소가 없으면 반드시 declare_failure
+    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button, cursor:p
+
+🤖 AI 원본 응답:
+{
+    "found": true,
+    "found_tier": "상",
+    "element_id": 1,
+    "action_type": "fill",
+    "text": "secret_sauce",
+    "reasoning": "비밀번호 입력칸에 'secret_sauce'를 입력하기 위해 상 tier 요소를 찾았고, 해당 요소가 존재하여 입력을 수행합니다."
+}
+
+📦 파싱된 결과: {'found': True, 'found_tier': '상', 'element_id': 1, 'action_type': 'fill', 'text': 'secret_sauce', 'reasoning': "비밀번호 입력칸에 'secret_sauce'를 입력하기 위해 상 tier 요소를 찾았고, 해당 요소가 존재하여 입력을 수행합니다."}
+
+[JS] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[JS] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[LOOP] step=2, url=https://www.saucedemo.com/
+📏 프롬프트 길이: 2329 chars
+📏 예상 토큰: ~582
+
+📋 프롬프트 내용:
+
+당신은 현재 상 tier 요소만 탐색 중입니다.
+
+**목표**: 사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.
+
+        **성공 조건**: 'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success
+
+        **중요**: 최근_행동에서 목표를 달성했다면 즉시 declare_success 호출
+        
+
+
+**규칙**:
+1. 상 tier 요소만 found=True 가능
+2. 중/하 tier 요소는 선택 불가
+3. element_id는 [인덱스] 번호 사용
+4. 현재 tier 요소 중 목표와 직접 관련된 요소가 없으면 반드시 declare_failure
+    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button, cursor:p
+
+🤖 AI 원본 응답:
+{
+    "found": true,
+    "found_tier": "상",
+    "element_id": 2,
+    "action_type": "click",
+    "reasoning": "LOGIN 버튼을 클릭하여 다음 단계로 진행합니다."
+}
+
+📦 파싱된 결과: {'found': True, 'found_tier': '상', 'element_id': 2, 'action_type': 'click', 'reasoning': 'LOGIN 버튼을 클릭하여 다음 단계로 진행합니다.'}
+
+[EXEC_CLICK] before: 1 pages, xpath=id("login-button")
+[EXEC_CLICK] no new tab after 2s, pages=1
+[URL_CHANGED] https://www.saucedemo.com/ → https://www.saucedemo.com/inventory.html
+[LOOP] step=3, url=https://www.saucedemo.com/inventory.html
+[NAV_REBUILD] url_changed=True, nav_is_none=True
+[TARGET_SEARCH] 캐시히트 - 'Cloud/Fleece' 2개: [('button', 'Sauce Labs Fleece Jacket'), ('button', 'Sauce Labs Fleece Jacket')]
+[TRACK] after pre_attentive: 0개 매칭
+[TRACK] section=main_0: 0개 매칭
+[TRACK] section=main_1: 0개 매칭
+[TRACK] section=footer: 0개 매칭
+[VISION_FILTER] main_0: 50 → 49 (20s)
+[TRACK] main_0 after persona: 0개 매칭
+[VISION_FILTER] main_0: 50 → 49 (20s)
+[VISION_FILTER] main_1: 45 → 45 (20s)
+[TRACK] main_1 after persona: 0개 매칭
+[VISION_FILTER] main_1: 45 → 45 (20s)
+[VISION_FILTER] footer: 9 → 2 (20s)
+[TRACK] footer after persona: 0개 매칭
+[VISION_FILTER] footer: 9 → 2 (20s)
+[SECTIONS] ['main_0', 'main_1', 'footer']
+  main_0: 49개
+  main_1: 45개
+  footer: 2개
+  [main_0][상][9] link '[no text]'
+  [main_0][상][10] image 'Open Menu'
+  [main_0][상][13] button 'Name (A to Z)Name (A to Z)Name'
+  [main_0][상][14] button 'Name (A to Z)'
+  [main_0][상][15] button '[no text]'
+  [main_0][상][16] button '[no text]'
+  [main_0][상][17] button '[no text]'
+  [main_0][상][18] button '[no text]'
+  [main_0][상][19] button 'Sauce Labs Backpack'
+  [main_0][상][20] button 'Sauce Labs Bike Light'
+  [main_0][상][21] button 'Sauce Labs Backpack'
+  [main_0][상][22] button 'Sauce Labs Bike Light'
+  [main_0][상][25] button 'Add to cart'
+  [main_0][상][26] button 'Add to cart'
+  [main_0][상][27] button '[no text]'
+  [main_0][상][28] button '[no text]'
+  [main_0][상][29] button '[no text]'
+  [main_0][상][30] button '[no text]'
+  [main_0][상][31] button 'Sauce Labs Bolt T-Shirt'
+  [main_0][상][32] button 'Sauce Labs Fleece Jacket'
+  [main_0][상][33] button 'Sauce Labs Bolt T-Shirt'
+  [main_0][상][34] button 'Sauce Labs Fleece Jacket'
+  [main_0][상][38] button 'Add to cart'
+  [main_0][상][39] button 'Add to cart'
+  [main_0][상][40] button '[no text]'
+  [main_0][상][41] button '[no text]'
+  [main_0][상][42] button '[no text]'
+  [main_0][상][43] button '[no text]'
+  [main_0][상][44] button 'Sauce Labs Onesie'
+  [main_0][상][45] button 'Test.allTheThings() T-Shirt (R'
+  [main_0][상][46] button 'Sauce Labs Onesie'
+  [main_0][상][47] button 'Test.allTheThings() T-Shirt (R'
+  [main_1][상][0] container '[no text]'
+  [main_1][상][1] container '[no text]'
+  [main_1][상][2] container '[no text]'
+  [main_1][상][3] container '[no text]'
+  [main_1][상][4] container '[no text]'
+  [main_1][상][5] container '[no text]'
+  [main_1][상][6] container '[no text]'
+  [main_1][상][7] container '[no text]'
+  [main_1][상][8] container '[no text]'
+  [main_1][상][9] container '[no text]'
+  [main_1][상][10] container '[no text]'
+  [main_1][상][11] container '[no text]'
+  [main_1][상][12] container '[no text]'
+  [main_1][상][13] container '[no text]'
+  [main_1][상][14] container '[no text]'
+  [main_1][상][15] container 'carry.allTheThings() with the '
+  [main_1][상][16] container 'A red light isn't the desired '
+  [main_1][상][17] container '[no text]'
+  [main_1][상][18] container '[no text]'
+  [main_1][상][19] container '[no text]'
+  [main_1][상][20] container '[no text]'
+  [main_1][상][21] container '[no text]'
+  [main_1][상][22] container '[no text]'
+  [main_1][상][23] container '[no text]'
+  [main_1][상][24] container '[no text]'
+  [main_1][상][25] container '[no text]'
+  [main_1][상][26] container '[no text]'
+  [main_1][상][27] container 'It's not every day that you co'
+  [main_1][상][28] container '[no text]'
+  [main_1][상][29] container '[no text]'
+  [main_1][상][30] container '[no text]'
+  [main_1][상][31] container '[no text]'
+  [main_1][상][32] container '[no text]'
+  [main_1][상][33] container '[no text]'
+  [main_1][상][34] container '[no text]'
+  [main_1][상][35] container '[no text]'
+  [main_1][상][36] container '[no text]'
+  [main_1][상][37] container '[no text]'
+  [main_1][상][38] container 'This classic Sauce Labs t-shir'
+  [main_1][상][39] container '[no text]'
+  [main_1][상][40] container '$ 7.99'
+  [main_1][상][41] container '[no text]'
+  [main_1][상][42] container '$ 15.99'
+  [main_1][상][43] button 'Add to cart'
+  [main_1][상][44] button 'Add to cart'
+[TARGET_TIER] main_0 tier=상 type=button content=Sauce Labs Fleece Jacket
+[TARGET_TIER] main_0 tier=상 type=button content=Sauce Labs Fleece Jacket
+📏 프롬프트 길이: 4296 chars
+📏 예상 토큰: ~1074
+
+📋 프롬프트 내용:
+
+당신은 현재 상 tier 요소만 탐색 중입니다.
+
+**목표**: 사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.
+
+        **성공 조건**: 'Sauce Labs Backpack' 상품 클릭 완료 시 즉시 declare_success
+
+        **중요**: 최근_행동에서 목표를 달성했다면 즉시 declare_success 호출
+        
+
+
+**규칙**:
+1. 상 tier 요소만 found=True 가능
+2. 중/하 tier 요소는 선택 불가
+3. element_id는 [인덱스] 번호 사용
+4. 현재 tier 요소 중 목표와 직접 관련된 요소가 없으면 반드시 declare_failure
+    ※ 목표 텍스트와 유사한 내용이 있는 경우, 해당 텍스트 근처의 클릭 가능한 요소(link, button, cursor:p
+
+🤖 AI 원본 응답:
+{
+    "found": true,
+    "found_tier": "상",
+    "element_id": 8,
+    "action_type": "click",
+    "reasoning": "목표에서 언급된 'Sauce Labs Backpack' 상품을 클릭하는 단계입니다. 이 요소는 상 tier에 위치하고 있으며, 목표와 직접적으로 관련이 있습니다."
+}
+
+📦 파싱된 결과: {'found': True, 'found_tier': '상', 'element_id': 8, 'action_type': 'click', 'reasoning': "목표에서 언급된 'Sauce Labs Backpack' 상품을 클릭하는 단계입니다. 이 요소는 상 tier에 위치하고 있으며, 목표와 직접적으로 관련이 있습니다."}
+
+[EXEC_CLICK] before: 1 pages, xpath=/html[1]/body[1]/div[1]/div[1]/div[1]/div[2]/div[1]/div[1]/d
+[EXEC_CLICK] no new tab after 2s, pages=1
+[URL_CHANGED] https://www.saucedemo.com/inventory.html → https://www.saucedemo.com/inventory-item.html?id=4
+[LOOP] step=4, url=https://www.saucedemo.com/inventory-item.html?id=4
+[AUTO_SUCCESS] URL 도달: https://www.saucedemo.com/inventory-item.html?id=4
+✅ 로그 저장: logs/2026-05-12_02-02-28/20s/sim_0d1b1c/AI-sess_2984d3f9.json
+[DEBUG] saved_path: logs/2026-05-12_02-02-28/20s/sim_0d1b1c/AI-sess_2984d3f9.json
+[s3_prefix]: raw/logs/2026-05-12_02-02-28
+[logs_dir]: logs/2026-05-12_02-02-28
+
+============================================================
+📊 실행 결과
+============================================================
+상태: success
+총 스텝: 4
+실행 시간: 25.96초
+
+💰 토큰 & 비용
+  - Prompt 토큰: 5,561
+  - Completion 토큰: 372
+  - 총 토큰: 5,933
+  - 총 비용: $0.0011
+
+🗂️ 캐시 통계
+  - parsing_cache: {'hits': 2, 'misses': 2, 'hit_rate': '50.00%'}
+  - incremental_cache: {'hits': 0, 'misses': 0, 'hit_rate': '0.00%'}
+============================================================
+PASSED[STEP_FUNCTIONS] 트리거: raw/logs/2026-05-12_02-02-28
+
+
+=============================== warnings summary ===============================
+venv/lib/python3.11/site-packages/pydantic/_internal/_config.py:268
+  /Users/hwangpilho/Desktop/Capstone/swarm/venv/lib/python3.11/site-packages/pydantic/_internal/_config.py:268: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.5/migration/
+    warnings.warn(DEPRECATION_MESSAGE, DeprecationWarning)
+
+src/normalizer/utils/image_vision/visoin_analyzer.py:16
+  /Users/hwangpilho/Desktop/Capstone/swarm/src/normalizer/utils/image_vision/visoin_analyzer.py:16: DeprecationWarning: 'imghdr' is deprecated and slated for removal in Python 3.13
+    import imghdr
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================== 2 passed, 2 warnings in 74.58s (0:01:14) ===================

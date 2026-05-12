@@ -152,6 +152,8 @@ class WebNormalizerIncremental(WebNormalizer):
                 page.wait_for_selector('body', timeout=5000)
                 if not self.mutation_observer.is_installed() or page.url != (self.last_url or ''):
                     self.mutation_observer.setup_observer(page)
+                    result = page.evaluate("() => typeof window.__ui_delta_buffer__")
+                    print(f"[BUFFER_CHECK] {result}")
                     page.evaluate("window.scrollTo(0, 0)")
             
             # Step 1-2: 부모 클래스의 전체 파싱 실행
@@ -253,10 +255,13 @@ class WebNormalizerIncremental(WebNormalizer):
             found_xpath = None
             removed_node = None
             
+            print(f"  [REMOVED_SELECTOR] 찾는 selector: {selector}")
+            
             for xpath, node in list(self.cache_manager.cache_map.items()):
-                if node.metadata.get('selector') == selector:
+                if xpath == selector:
                     found_xpath = xpath
                     removed_node = node
+                    print(f"  [CACHE_SELECTOR] {node.metadata.get('selector')}")
                     break
             
             if removed_node:

@@ -148,7 +148,8 @@ def playwright_browser():
     browser = p.chromium.launch(headless=False, channel="chrome")
     context = browser.new_context()
     page = context.new_page()
-    page.on("console", lambda msg: print(f"[JS] {msg.text}"))  # ← 추가
+    page.on("console", lambda msg: print(f"[JS] {msg.text}"))
+    page.on("dialog", lambda d: (print(f"[DIALOG] {d.message}"), d.accept()))
     
     yield page
     
@@ -227,9 +228,9 @@ class TestNavigatorGuideE2E:
         success_condition = {'path': '/journal/articleDetail', 'required_params': {'nodeId': 'NODE12728926'}}
         """
         
-        url = "https://test-web-fe-shopping-mall.vercel.app/shop"
-        goal = "상단 네비게이션에서 'Bottom' 카테고리를 클릭해. 상품 목록에서 'Cloud Soft Fleece Pants'를 찾아 클릭해. 상품 상세 페이지에서 색상 드롭박스 클릭해서 화이트, 사이즈 드롭박스 클릭해서 free 선택하고, '바로구매' 버튼을 클릭해."
-        success_condition = {'path': '/payment'}
+        url = "https://www.saucedemo.com/"
+        goal = "사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭."
+        success_condition = {'path': '/inventory-item.html'}
         
         
         uploader = S3Uploader(bucket_name=os.getenv('S3_BUCKET'))
@@ -267,11 +268,11 @@ class TestNavigationLoopE2E:
     
     @pytest.mark.parametrize("url,goal,persona,success_condition", [
         pytest.param(
-            "https://test-web-fe-shopping-mall.vercel.app/shop",
-            "상단 네비게이션에서 'Bottom' 카테고리를 클릭해. 상품 목록에서 'Cloud Soft Fleece Pants'를 찾아 클릭해. 상품 상세 페이지에서 색상 드롭박스 클릭해서 화이트, 사이즈 드롭박스 클릭해서 free 선택하고, '바로구매' 버튼을 클릭해.",
+            "https://www.saucedemo.com/",
+            "사용자명 입력칸에 'standard_user' 입력. 비밀번호 입력칸에 'secret_sauce' 입력. 'LOGIN' 버튼 클릭. 상품 목록에서 'Sauce Labs Backpack' 상품 클릭.",
             BasePersona('20s'),
-            {'path': '/payment'},
-            id="shopping_20s"
+            {'path': '/inventory-item.html'},
+            id="saucedemo_20s"
         ),
     ])
     def test_real_navigation(self, playwright_browser, real_normalizer, real_navigator_ai, session_dir, uploader, url, goal, persona, success_condition):

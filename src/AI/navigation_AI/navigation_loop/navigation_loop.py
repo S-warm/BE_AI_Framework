@@ -187,10 +187,13 @@ class NavigationLoop:
                     return self._finalize(result['action'])
 
                 if result['closed']:
+                    moved = section_navigator.move_to_next_section()
+                    print(f"[CLOSED] move_to_next_section={moved}, current={section_navigator.current_section_idx}")
                     continue
 
             # [2] 페이지 파싱 + SectionNavigator 생성 (URL 변경 시에만)
             if self._url_changed() or section_navigator is None:
+                print(f"[NAV_REBUILD] url_changed={self._url_changed()}, nav_is_none={section_navigator is None}")
                 if self._url_changed():
                     self.context_memory.clear_incremental()
                     self._update_page_history()
@@ -313,7 +316,7 @@ class NavigationLoop:
                     viewport_h = self.page.viewport_size.get('height', 1080) if self.page.viewport_size else 1080
                     new_sections = self._process_tier1(nodes, viewport_h, self.persona)
                     section_navigator = SectionNavigator(new_sections, self.fatigue_manager)
-                    section_navigator.current_section_idx = 0
+                    section_navigator.current_section_idx = prev_section_idx  # 0 아니라 현재 섹션 유지
                     section_navigator.current_tier_idx = 0
                     print(f"[WEAK_DELTA_FALLBACK] section_idx={section_navigator.current_section_idx}부터 재개")
                     continue
@@ -362,7 +365,7 @@ class NavigationLoop:
         parsed = urllib.parse.urlparse(current_url)
         params = urllib.parse.parse_qs(parsed.query)
             
-        for key, value in cond.get('required_params', {}).items():
+        for key, value in (cond.get('required_params') or {}).items():
             actual = params.get(key, [None])[0]
             if unquote(actual or '') != unquote(value):
                 return f"아직 목표 페이지가 아닙니다. 계속 탐색하세요.."
@@ -676,7 +679,7 @@ class NavigationLoop:
         self.navigation_memory.add_action(
             action=result['action'],
             element_id=node_id,
-            element_text=reasoning,
+            element_text=target_node.content or reasoning,
             result='success' if result['success'] else 'failure',
             error=result.get('error') if not result['success'] else None
         )

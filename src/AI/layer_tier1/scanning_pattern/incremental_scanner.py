@@ -130,6 +130,7 @@ class IncrementalScanner:
             }
             tool_name = tool_map.get(action_type, 'click_element')
             
+            
             # 11. 액션 실행
             result = self.executor.execute_tool(
                 tool_name=tool_name,
@@ -141,7 +142,7 @@ class IncrementalScanner:
             navigation_memory.add_action(
                 action=result['action'],
                 element_id=node_id,
-                element_text=reasoning,
+                element_text=target_node.content or reasoning,
                 result='success' if result['success'] else 'failure'
             )
             
@@ -163,9 +164,22 @@ class IncrementalScanner:
             
             # 15. 중첩 증분 감지
             if result['action'] == 'click' and page.url == current_url:
-                page.wait_for_timeout(1000)
+                normalizer.mutation_observer.clear_buffers(page)
+                print("!!!! 클릭 후 clear_buffers 호출됨 !!!!")
+                page.wait_for_timeout(3000)
                 clicked_xpath = target_node.metadata.get('xpath') if target_node else None
                 delta = normalizer.normalize(page, clicked_xpath)
+                print(f"[DELTA_SIZE] {len(delta) if delta else 0}")
+                
+                # 닫힘 감지: removed 노드 있으면 레이어 닫힘
+                if not delta:
+                    context_memory.remove_last_incremental()
+                    return {
+                        'action': result['action'],
+                        'closed': True,
+                        'nested': False,
+                        'complete': False
+                    }
                 
                 if delta:
                     meta = target_node.metadata or {}
@@ -232,5 +246,7 @@ class IncrementalScanner:
         return None
     
     def _has_removed_nodes(self, delta_nodes: List[StandardUINode]) -> bool:
-        """removed 노드 확인"""
-        return any(node.properties.get('removed', False) for node in delta_nodes)
+        removed = [n for n in delta_nodes if n.properties.get('removed', False)]
+        print(f"[DELTA_CONTENT] {[(n.type, n.content[:20] if n.content else '') for n in delta_nodes]}")
+        print(f"[REMOVED_CHECK] total={len(delta_nodes)}, removed={len(removed)}")
+        return len(removed) > 0

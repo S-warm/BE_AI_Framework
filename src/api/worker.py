@@ -65,7 +65,6 @@ def run_simulation(self, job_id: str, target_url: str, task: str,
     try:
         # 의존성 생성 (테스트 코드 fixture들과 동일)
         navigator_ai = NavigatorAI(log_dir=log_dir)
-        normalizer = WebNormalizerIncremental()
         uploader = S3Uploader(bucket_name=os.getenv("S3_BUCKET"))
         persona = BasePersona(age_group)
 
@@ -83,6 +82,7 @@ def run_simulation(self, job_id: str, target_url: str, task: str,
             )
             page = context.new_page()
             page.on("console", lambda msg: print(f"[JS] {msg.text}"))
+            page.on("dialog", lambda d: (print(f"[DIALOG] {d.message}"), d.accept()))
 
             # 1. guide 먼저
             guide = NavigatorGuide(
@@ -91,13 +91,17 @@ def run_simulation(self, job_id: str, target_url: str, task: str,
                 db_path=DB_PATH,
                 uploader=uploader,
             )
-            date_prefix = Path(session_dir).name
+            date_prefix = session_dir
             guide.run(goal=task, url=target_url, success_condition=success_condition, session_dir=session_dir, date_prefix=date_prefix)
+            
+            # guide 끝났으니 log_dir을 sim 폴더로 복구
+            page.goto(target_url, wait_until='domcontentloaded', timeout=60000)
+            navigator_ai.set_log_dir(log_dir)
 
             # 2. loop 그 다음 (page.goto 없이)
             loop = NavigationLoop(
                 page=page,
-                normalizer=normalizer,
+                normalizer=guide.normalizer,  # ← 변경
                 navigator_ai=navigator_ai,
                 db_path=DB_PATH,
                 log_dir=log_dir,
@@ -133,7 +137,7 @@ def run_simulation(self, job_id: str, target_url: str, task: str,
 
         # 마지막 태스크면 Step Functions 트리거 (autouse fixture와 동일)
         if new_completed + new_failed >= total:
-            pass #_trigger_step_functions(session_dir)
+            _trigger_step_functions(session_dir)
 
     return {"status": sim_status, "age_group": age_group, "s3_urls": s3_urls}
 

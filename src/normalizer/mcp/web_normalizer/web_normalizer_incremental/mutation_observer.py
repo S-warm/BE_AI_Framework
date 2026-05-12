@@ -3,6 +3,8 @@
 from playwright.sync_api import Page
 from typing import Dict, Any
 
+import traceback
+
 class MutationObserver:
     """
     MutationObserver 기반 증분 파싱
@@ -331,6 +333,22 @@ class MutationObserver:
                 // ===== Step D: MutationObserver 설치 =====
                 
                 const observer = new MutationObserver((mutations) => {
+                    // ===== 디버그 로그 =====
+                    console.log('[MUT] count:', mutations.length, 'buffer:', window.__ui_delta_buffer__.size);
+                    mutations.forEach(mutation => {
+                        console.log('[MUT_DETAIL] type:', mutation.type, 
+                                    'target:', mutation.target.tagName,
+                                    'added:', mutation.addedNodes.length,
+                                    'removed:', mutation.removedNodes.length,
+                                    'attr:', mutation.attributeName);
+                        if (mutation.addedNodes.length > 0) {
+                            mutation.addedNodes.forEach((n, i) => {
+                                console.log(`  [+${i}] nodeType:${n.nodeType}, tag:${n.tagName}, children:${n.children?.length}`);
+                            });
+                        }
+                    });
+                    
+                    
                     // mutations = 변경 내역 배열
                     
                     mutations.forEach(mutation => {
@@ -352,8 +370,8 @@ class MutationObserver:
                                 if (node.nodeType === 1) {
                                     try {
                                         // 삭제 전에 selector 기록
-                                        const selector = getSelector(node, node.parentElement);
-                                        window.__ui_removed_buffer__.add(selector);
+                                        const xpath = getXPath(node);
+                                        window.__ui_removed_buffer__.add(xpath);
                                     } catch (e) {
                                         // 이미 DOM에서 제거되어 접근 불가능한 경우 무시
                                     }
@@ -368,7 +386,10 @@ class MutationObserver:
                             if (attr === 'style' || attr === 'class' || attr === 'hidden') {
                                 const el = mutation.target;
                                 const style = window.getComputedStyle(el);
-                                if (style.display !== 'none' && style.visibility !== 'hidden') {
+                                if (style.display === 'none' || style.visibility === 'hidden') {
+                                    const xpath = getXPath(el);
+                                    window.__ui_removed_buffer__.add(xpath);
+                                } else {
                                     window.__ui_delta_buffer__.add(el);
                                     el.querySelectorAll('a, button, input, select, li, div').forEach(child => {
                                         window.__ui_delta_buffer__.add(child);
@@ -487,6 +508,8 @@ class MutationObserver:
         """
         
         print("=== 버퍼 초기화 ===")
+        
+        traceback.print_stack(limit=5)
         
         page.evaluate('''
             () => {

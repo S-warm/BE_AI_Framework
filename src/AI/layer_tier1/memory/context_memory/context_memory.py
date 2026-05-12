@@ -31,6 +31,7 @@ class ContextMemory:
             #     {'nodes': [옵션1, 옵션2], 'trigger': '...'}
             # ]
         """
+        print(f"[LAYER_ADD] 현재 레이어 수: {len(self.incremental_layers)}")
         new_layer = {
             'nodes': nodes,
             'trigger': trigger
@@ -119,6 +120,7 @@ class ContextMemory:
             # 빈 스택에서 호출해도 에러 안 남
             context_memory.remove_last_incremental()  # 조용히 무시
         """
+        print(f"[LAYER_REMOVE] 현재 레이어 수: {len(self.incremental_layers)}")
         if self.incremental_layers:
             self.incremental_layers.pop()
             

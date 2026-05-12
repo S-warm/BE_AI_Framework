@@ -103,7 +103,7 @@ class DOMExtractor:
         with open(local_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
 
-        s3_key = f"raw/logs/{date_prefix}/dom/{encoded}.json"
+        s3_key = f"raw/{date_prefix}/dom/{encoded}.json"
         if self.uploader:
             self.uploader.upload_file(str(local_path), s3_key)
             print(f"[DOM] S3 업로드: {s3_key}")

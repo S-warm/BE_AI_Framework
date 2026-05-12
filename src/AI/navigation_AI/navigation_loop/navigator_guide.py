@@ -33,6 +33,9 @@ class NavigatorGuide:
         self.navigator_ai = navigator_ai
         self.db_path = db_path
         
+        # alert 자동 accept (이미 등록된 경우 중복돼도 무해)
+        page.on("dialog", lambda d: (print(f"[DIALOG] {d.message}"), d.accept()))
+        
         # 스크린샷 캐시 (워밍업 핵심)
         self.screenshot_cache = ScreenshotCache(db_path)
         

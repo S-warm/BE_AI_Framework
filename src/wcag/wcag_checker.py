@@ -98,13 +98,13 @@ class WCAGChecker:
         4. violations 파싱 (GPT-4o 번역 포함)
         5. score, wcagLabel, distribution 계산
         """
-        self.page.goto(url)
-        self.page.wait_for_load_state("networkidle", timeout=15000)
+        self.page.goto(url, wait_until="domcontentloaded", timeout=15000)
+        self.page.wait_for_timeout(2000)  # 동적 콘텐츠 렌더 대기
 
-        # axe-core 스크립트 주입 (CDN)
         # CSP가 엄격한 사이트는 여기서 막힐 수 있음
+        # axe-core 스크립트 주입 (CDN)
         self.page.add_script_tag(url=AXE_CDN)
-        self.page.wait_for_timeout(1000)  # 스크립트 로드 대기
+        self.page.wait_for_timeout(1000)
 
         # axe.run() 실행 - WCAG 2.1 A/AA 기준으로만 검사
         axe_result = self.page.evaluate("""
@@ -224,12 +224,12 @@ class WCAGChecker:
 
     def _save(self, result: Dict, date_prefix: str):
         """로컬 저장 + S3 업로드"""
-        local_path = Path(f"/tmp/wcag_{date_prefix}.json")
+        local_path = Path(f"/tmp/wcag_{date_prefix.replace('/', '_')}.json")
         with open(local_path, "w", encoding="utf-8") as f:
             json.dump(result, f, ensure_ascii=False, indent=2)
         print(f"[WCAG] 로컬 저장: {local_path}")
 
         if self.uploader:
-            s3_key = f"raw/logs/{date_prefix}/analyzed/wcag.json"
+            s3_key = f"raw/{date_prefix}/analyzed/wcag.json"
             self.uploader.upload_file(str(local_path), s3_key)
             print(f"[WCAG] S3 업로드: {s3_key}")
