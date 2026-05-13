@@ -12,6 +12,7 @@ import json
 import redis as redis_lib
 from celery import Celery
 from pathlib import Path
+from AI.cache.screenshot_cache import ScreenshotCache
 
 celery_app = Celery(
     "ux_swarm",
@@ -54,6 +55,7 @@ def run_simulation(self, job_id: str, target_url: str, task: str,
     from normalizer.mcp.web_normalizer.web_normalizer_incremental.web_normalizer_incremental import WebNormalizerIncremental
     from engine.navigator_ai import NavigatorAI
     from AI.navigation_AI.navigation_loop.navigator_guide import NavigatorGuide
+    from AI.cache.screenshot_cache import ScreenshotCache
 
     # 경로 구성 (테스트 코드 test_real_navigation과 동일)
     persona_dir = Path(session_dir) / age_group
@@ -84,24 +86,51 @@ def run_simulation(self, job_id: str, target_url: str, task: str,
             page.on("console", lambda msg: print(f"[JS] {msg.text}"))
             page.on("dialog", lambda d: (print(f"[DIALOG] {d.message}"), d.accept()))
 
-            # 1. guide 먼저
-            guide = NavigatorGuide(
-                page=page,
-                navigator_ai=navigator_ai,
-                db_path=DB_PATH,
-                uploader=uploader,
-            )
-            date_prefix = session_dir
-            guide.run(goal=task, url=target_url, success_condition=success_condition, session_dir=session_dir, date_prefix=date_prefix)
-            
+            # 1. guide는 job당 1번만 (Redis 락)
+            r = get_redis()
+            guide_lock_key = f"guide_lock:{job_id}"
+            guide_done_key = f"guide_done:{job_id}"
+
+            got_lock = r.set(guide_lock_key, "1", nx=True, ex=600)
+
+            # normalizer는 워커별로 각자 생성 (어차피 캐시는 DB로 공유됨)
+            screenshot_cache = ScreenshotCache(DB_PATH)
+            normalizer = WebNormalizerIncremental(screenshot_cache=screenshot_cache)
+
+            if got_lock:
+                print(f"[GUIDE_LOCK] 락 획득 → guide 실행")
+                try:
+                    guide = NavigatorGuide(
+                        page=page,
+                        navigator_ai=navigator_ai,
+                        db_path=DB_PATH,
+                        uploader=uploader,
+                    )
+                    date_prefix = session_dir
+                    guide.run(goal=task, url=target_url, success_condition=success_condition, session_dir=session_dir, date_prefix=date_prefix)
+                    normalizer = guide.normalizer  # guide의 normalizer 사용
+                finally:
+                    r.set(guide_done_key, "1", ex=3600)
+                    print(f"[GUIDE_LOCK] guide 완료 → 시그널 전송")
+            else:
+                print(f"[GUIDE_LOCK] 다른 워커가 guide 실행 중 → 대기")
+                import time
+                wait_start = time.time()
+                while not r.get(guide_done_key):
+                    time.sleep(2)
+                    if time.time() - wait_start > 600:
+                        print(f"[GUIDE_LOCK] 대기 타임아웃 → 진행")
+                        break
+                print(f"[GUIDE_LOCK] guide 완료 확인 → 페르소나 시뮬 시작")
+
             # guide 끝났으니 log_dir을 sim 폴더로 복구
             page.goto(target_url, wait_until='domcontentloaded', timeout=60000)
             navigator_ai.set_log_dir(log_dir)
 
-            # 2. loop 그 다음 (page.goto 없이)
+            # 2. loop 그 다음
             loop = NavigationLoop(
                 page=page,
-                normalizer=guide.normalizer,  # ← 변경
+                normalizer=normalizer,  # ← guide.normalizer 대신 normalizer 변수
                 navigator_ai=navigator_ai,
                 db_path=DB_PATH,
                 log_dir=log_dir,

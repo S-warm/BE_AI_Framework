@@ -167,6 +167,9 @@ class NavigationLoop:
         while self.step_count < self.max_steps:
             print(f"[LOOP] step={self.step_count}, url={self.page.url}")
             
+            # ★ 광고/모달 자동 닫기
+            self._dismiss_overlays()
+            
             # URL 도달 체크 (매 턴 시작 시) -> 나중에 액션도 추가
             if self.success_condition and self._verify_success() is None:
                 print(f"[AUTO_SUCCESS] URL 도달: {self.page.url}")
@@ -377,8 +380,45 @@ class NavigationLoop:
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def _url_changed(self) -> bool:
-        """URL 변경 감지"""
-        return self.page.url != self.current_url
+        """URL 변경 감지 (fragment 무시)"""
+        from urllib.parse import urlparse
+        
+        def normalize(url: str) -> str:
+            p = urlparse(url)
+            return f"{p.scheme}://{p.netloc}{p.path}?{p.query}"
+        
+        return normalize(self.page.url) != normalize(self.current_url)
+    
+    def _dismiss_overlays(self):
+        """광고, 모달, 쿠키 배너 등 자동 닫기. 실패해도 조용히 넘김."""
+        try:
+            # Google AdSense vignette ad
+            self.page.evaluate("""
+                () => {
+                    // google_vignette fragment 제거
+                    if (window.location.hash === '#google_vignette') {
+                        history.replaceState(null, '', window.location.pathname + window.location.search);
+                    }
+                    // 광고 iframe 제거
+                    document.querySelectorAll('iframe[id*="google_ads"], iframe[id*="aswift"]').forEach(el => el.remove());
+                    // 광고 컨테이너 제거
+                    document.querySelectorAll('[id*="google_vignette"], .adsbygoogle').forEach(el => el.remove());
+                    // 일반 모달 close 버튼 시도
+                    const closeSelectors = [
+                        '[aria-label="Close ad" i]',
+                        '[aria-label="Close" i]',
+                        'button.dismiss-button',
+                        '.modal-close',
+                        '#dismiss-button',
+                    ];
+                    for (const sel of closeSelectors) {
+                        const btn = document.querySelector(sel);
+                        if (btn) btn.click();
+                    }
+                }
+            """)
+        except Exception as e:
+            print(f"[DISMISS_OVERLAY] skip: {e}")
 
     def _parse_with_cache(self, url: str) -> List[StandardUINode]:
         cached = self.parsing_cache.get(url)
@@ -626,6 +666,23 @@ class NavigationLoop:
                 'error': f'Invalid element_id {element_id}',
                 'target_node_id': None
             }
+
+        # ★ 같은 노드 반복 click 차단
+        if action_type == 'click':
+            target_node = visible[element_id]
+            recent_actions = self.navigation_memory.get_recent(3)
+            same_node_clicks = sum(
+                1 for a in recent_actions
+                if a.get('action') == 'click' and a.get('element_id') == target_node.id
+            )
+            if same_node_clicks >= 2:
+                print(f"[REPEAT_BLOCK] {target_node.id} click {same_node_clicks}회 반복 → declare_failure 강제")
+                return {
+                    'success': False,
+                    'action': 'declare_failure',
+                    'error': f'Same element clicked {same_node_clicks} times without progress',
+                    'target_node_id': target_node.id
+                }
 
         target_node = visible[element_id]
         node_id = target_node.id
