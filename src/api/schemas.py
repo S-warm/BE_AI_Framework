@@ -94,6 +94,7 @@ class S3Results(BaseModel):
     summary_aggregation: str
     wcag: str
     fixes: str  # fixes/{encoded_url}/fix.json 경로
+    screenshots: str
  
  
 class SimulationResultResponse(BaseModel):

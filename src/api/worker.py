@@ -32,15 +32,17 @@ def update_status(job_id: str, completed: int, total: int, failed: int):
     r.set(f"status:{job_id}", f"{completed}|{total}|{failed}", ex=3600)
 
 
-def _trigger_step_functions(session_dir: str):
-    """테스트 코드 trigger_step_functions_after_all fixture와 동일한 로직"""
+def _trigger_step_functions(session_dir: str, job_id: str):
     import boto3
     client = boto3.client('stepfunctions', region_name='ap-northeast-2')
     client.start_execution(
         stateMachineArn='arn:aws:states:ap-northeast-2:195765661361:stateMachine:swarm-auditor-pipeline',
-        input=json.dumps({"prefix": f"raw/{session_dir}"})
+        input=json.dumps({
+            "prefix": f"raw/{session_dir}",
+            "job_id": job_id
+        })
     )
-    print(f"[STEP_FUNCTIONS] 트리거: raw/{session_dir}")
+    print(f"[STEP_FUNCTIONS] 트리거: raw/{session_dir}, job_id={job_id}")
 
 
 @celery_app.task(bind=True)
@@ -166,7 +168,7 @@ def run_simulation(self, job_id: str, target_url: str, task: str,
 
         # 마지막 태스크면 Step Functions 트리거 (autouse fixture와 동일)
         if new_completed + new_failed >= total:
-            _trigger_step_functions(session_dir)
+            _trigger_step_functions(session_dir, job_id)
 
     return {"status": sim_status, "age_group": age_group, "s3_urls": s3_urls}
 
