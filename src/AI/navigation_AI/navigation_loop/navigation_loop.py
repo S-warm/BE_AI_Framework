@@ -762,25 +762,23 @@ class NavigationLoop:
                     node.content or '[no text]' for node in tier_nodes
                 ]
 
-            # 페르소나 시각 제약으로 삭제된 노드 (페이지당 1회만 기록)
+            # 페르소나 시각 제약으로 삭제된 노드 (좌표 중복 제거)
             removed_elements = []
-            if not self._removed_logged:
-                seen = set()
-                for item in (self.last_removed_nodes or []):
-                    node = item['node']
-                    x = node.properties.get('x')
-                    y = node.properties.get('y')
-                    if (x, y) in seen:
-                        continue
-                    seen.add((x, y))
-                    removed_elements.append({
-                        'text': node.content or '[no text]',
-                        'reason': item['reason'],
-                        'x': x,
-                        'y': y,
-                        'tier': node.properties.get('tier'),
-                    })
-                self._removed_logged = True
+            seen = set()
+            for item in (self.last_removed_nodes or []):
+                node = item['node']
+                x = node.properties.get('x')
+                y = node.properties.get('y')
+                if (x, y) in seen:
+                    continue
+                seen.add((x, y))
+                removed_elements.append({
+                    'text': node.content or '[no text]',
+                    'reason': item['reason'],
+                    'x': x,
+                    'y': y,
+                    'tier': node.properties.get('tier'),
+                })
             tier_elements['removed_by_vision'] = removed_elements
 
             self.logger.log_action(
