@@ -106,7 +106,7 @@ class NavigationLoop:
         # 티어 순회시 최적화 요약용
         self.last_explored_tiers: List[str] = []
         
-        # 삭제되는 노드들
+        # 삭제된 노드들
         self.last_removed_nodes = []
         
         # 로깅용
@@ -503,7 +503,7 @@ class NavigationLoop:
         nodes: List[StandardUINode],
         viewport_height: int = 1080,
         persona: Optional[BasePersona] = None
-    ) -> Dict[str, List[StandardUINode]]:   
+    ) -> Dict[str, List[StandardUINode]]:
         """
         Tier 1 처리 (그룹핑 + 분류 + 정렬)
 
@@ -758,7 +758,20 @@ class NavigationLoop:
                 tier_elements[f'{tier_name}_tier'] = [
                     node.content or '[no text]' for node in tier_nodes
                 ]
-            
+
+            # 페르소나 시각 제약으로 삭제된 노드 (좌표 포함)
+            removed_elements = []
+            for item in (self.last_removed_nodes or []):
+                node = item['node']
+                removed_elements.append({
+                    'text': node.content or '[no text]',
+                    'reason': item['reason'],
+                    'x': node.properties.get('x'),
+                    'y': node.properties.get('y'),
+                    'tier': node.properties.get('tier'),
+                })
+            tier_elements['removed_by_vision'] = removed_elements
+
             self.logger.log_action(
                 action_type='declare_failure',
                 target_html=None,
