@@ -108,6 +108,7 @@ class NavigationLoop:
         
         # 삭제된 노드들
         self.last_removed_nodes = []
+        self._removed_logged = False
         
         # 로깅용
         self.logger: Optional[NavigationAILog] = None
@@ -207,6 +208,7 @@ class NavigationLoop:
                     self.current_url = self.page.url
                     self.logger.end_page()
                     self.logger.start_page(self.page.url)
+                    self._removed_logged = False
 
                 nodes = self._parse_with_cache(self.current_url)
                 viewport_h = self.page.viewport_size.get('height', 1080) if self.page.viewport_size else 1080
@@ -288,6 +290,7 @@ class NavigationLoop:
                     self.logger.end_page()
                     self.logger.start_page(new_page.url)
                     print(f"[NEW_TAB] 새 탭으로 swap: {self.page.url}")
+                    self._removed_logged = False
                     section_navigator = None
                     continue
                 
@@ -759,17 +762,25 @@ class NavigationLoop:
                     node.content or '[no text]' for node in tier_nodes
                 ]
 
-            # 페르소나 시각 제약으로 삭제된 노드 (좌표 포함)
+            # 페르소나 시각 제약으로 삭제된 노드 (페이지당 1회만 기록)
             removed_elements = []
-            for item in (self.last_removed_nodes or []):
-                node = item['node']
-                removed_elements.append({
-                    'text': node.content or '[no text]',
-                    'reason': item['reason'],
-                    'x': node.properties.get('x'),
-                    'y': node.properties.get('y'),
-                    'tier': node.properties.get('tier'),
-                })
+            if not self._removed_logged:
+                seen = set()
+                for item in (self.last_removed_nodes or []):
+                    node = item['node']
+                    x = node.properties.get('x')
+                    y = node.properties.get('y')
+                    if (x, y) in seen:
+                        continue
+                    seen.add((x, y))
+                    removed_elements.append({
+                        'text': node.content or '[no text]',
+                        'reason': item['reason'],
+                        'x': x,
+                        'y': y,
+                        'tier': node.properties.get('tier'),
+                    })
+                self._removed_logged = True
             tier_elements['removed_by_vision'] = removed_elements
 
             self.logger.log_action(
