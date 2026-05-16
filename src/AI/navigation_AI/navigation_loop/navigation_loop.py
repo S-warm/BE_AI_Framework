@@ -760,6 +760,7 @@ class NavigationLoop:
                 scroll_y=int(self.page.evaluate('window.scrollY')),
                 step=self.step_count,
                 step_file=step_file,
+                is_failed=True,
                 failure_context=tier_elements
             )
 
