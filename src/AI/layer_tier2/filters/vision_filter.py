@@ -38,12 +38,27 @@ class VisionFilter:
         self.config = get_age_config(age_group)
         self.vision = self.config['vision']
         self.action = self.config['action_accuracy']
+        self.removed = []
 
     def apply(self, nodes: List[StandardUINode]) -> List[StandardUINode]:
+        self.removed = []
+
+        before = nodes
         nodes = self._filter_font_size(nodes)
+        self._record_removed(before, nodes, 'font_size')
+
+        before = nodes
         nodes = self._filter_contrast(nodes)
+        self._record_removed(before, nodes, 'contrast')
+
+        before = nodes
         nodes = self._filter_button_size(nodes)
+        self._record_removed(before, nodes, 'button_size')
+
+        before = nodes
         nodes = self._filter_icon_only(nodes)
+        self._record_removed(before, nodes, 'icon_only')
+
         return nodes
 
     def _filter_font_size(self, nodes: List[StandardUINode]) -> List[StandardUINode]:
@@ -126,3 +141,13 @@ class VisionFilter:
             to_remove.extend(tier_nodes[:needed])
 
         return non_icon_nodes + [n for n in icon_nodes if n not in to_remove]
+    
+    def _record_removed(self, before, after, reason: str):
+        """before에 있었는데 after에 없는 노드 = 이번 단계에서 삭제됨"""
+        after_ids = {id(n) for n in after}
+        for n in before:
+            if id(n) not in after_ids:
+                self.removed.append({
+                    'node': n,
+                    'reason': reason,
+                })

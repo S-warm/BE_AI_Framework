@@ -106,6 +106,9 @@ class NavigationLoop:
         # 티어 순회시 최적화 요약용
         self.last_explored_tiers: List[str] = []
         
+        # 삭제되는 노드들
+        self.last_removed_nodes = []
+        
         # 로깅용
         self.logger: Optional[NavigationAILog] = None
         self.log_dir = log_dir
@@ -500,7 +503,7 @@ class NavigationLoop:
         nodes: List[StandardUINode],
         viewport_height: int = 1080,
         persona: Optional[BasePersona] = None
-    ) -> Dict[str, List[StandardUINode]]:
+    ) -> Dict[str, List[StandardUINode]]:   
         """
         Tier 1 처리 (그룹핑 + 분류 + 정렬)
 
@@ -511,6 +514,8 @@ class NavigationLoop:
                 'footer': [...]
             }
         """
+        
+        removed_nodes = []
         
         # visual_priority 계산
         nodes, _ = pre_attentive.apply_preattentive_priority(nodes)
@@ -556,6 +561,7 @@ class NavigationLoop:
             sorted_nodes = sort_by_y_position(classified)
             if persona:
                 filtered = persona.filter_nodes(sorted_nodes)
+                removed_nodes.extend(persona.get_removed_nodes())
                 print(f"[VISION_FILTER] {section_name}: {len(sorted_nodes)} → {len(filtered)} ({persona.age_group})")
                 sections_processed[section_name] = filtered
                 
@@ -583,6 +589,7 @@ class NavigationLoop:
                 if 'Cloud' in (n.content or '') or 'Fleece' in (n.content or ''):
                     print(f"[TARGET_TIER] {k} tier={n.properties.get('tier')} type={n.type} content={n.content[:40]}")
 
+        self.last_removed_nodes = removed_nodes
         return sections_processed
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

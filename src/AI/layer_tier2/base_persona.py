@@ -43,3 +43,13 @@ class BasePersona:
             연령대 시각 제약 기준으로 필터링된 노드 리스트
         """
         return self.vision_filter.apply(nodes)
+    
+    def get_removed_nodes(self) -> List[Dict]:
+        """
+        직전 filter_nodes() 호출에서 시각 제약으로 삭제된 노드 목록.
+
+        Returns:
+            [{'node': StandardUINode, 'reason': str}, ...]
+            reason: 'font_size' | 'contrast' | 'button_size' | 'icon_only'
+        """
+        return self.vision_filter.removed
