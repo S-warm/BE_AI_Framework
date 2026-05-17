@@ -14,6 +14,7 @@ S3 저장 경로:
 """
 
 import json
+import traceback
 from typing import List, Dict, Optional
 from pathlib import Path
 from urllib.parse import quote
@@ -43,6 +44,7 @@ class DOMExtractor:
                 result[url] = s3_key
             except Exception as e:
                 print(f"[DOM] 실패: {url} → {e}")
+                traceback.print_exc()
                 result[url] = None
         return result
 
@@ -61,8 +63,9 @@ class DOMExtractor:
         Returns:
             HTML 문자열
         """
-        self.page.goto(url)
-        self.page.wait_for_load_state("networkidle", timeout=15000)
+        self.page.goto(url, wait_until='domcontentloaded', timeout=30000)
+        self._dismiss_overlays()
+        self.page.wait_for_timeout(2000)
         return self.page.content()
 
     def _encode_url(self, url: str) -> str:
@@ -168,3 +171,29 @@ class DOMExtractor:
                 return result;
             }
         """)
+        
+    def _dismiss_overlays(self):
+        """광고, 모달, 쿠키 배너 자동 닫기. 실패해도 조용히 넘김."""
+        try:
+            self.page.evaluate("""
+                () => {
+                    if (window.location.hash === '#google_vignette') {
+                        history.replaceState(null, '', window.location.pathname + window.location.search);
+                    }
+                    document.querySelectorAll('iframe[id*="google_ads"], iframe[id*="aswift"]').forEach(el => el.remove());
+                    document.querySelectorAll('[id*="google_vignette"], .adsbygoogle').forEach(el => el.remove());
+                    const closeSelectors = [
+                        '[aria-label="Close ad" i]',
+                        '[aria-label="Close" i]',
+                        'button.dismiss-button',
+                        '.modal-close',
+                        '#dismiss-button',
+                    ];
+                    for (const sel of closeSelectors) {
+                        const btn = document.querySelector(sel);
+                        if (btn) btn.click();
+                    }
+                }
+            """)
+        except Exception as e:
+            print(f"[DISMISS_OVERLAY] skip: {e}")
