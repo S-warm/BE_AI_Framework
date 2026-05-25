@@ -144,6 +144,8 @@ class NavigationLoop:
         self.logger = NavigationAILog(persona_age=age)
         self.logger.start_page(self.current_url)
         
+        print(f"[DEBUG_INIT] success_condition={success_condition}, type={type(success_condition)}")  # ← 여기
+        
         # 목표 파싱 (최초 1회)
         self.parsed_task = parse_goal(goal, self.navigator_ai)
         print(f"\n📋 파싱된 목표:")
@@ -358,6 +360,8 @@ class NavigationLoop:
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     
     def _verify_success(self) -> Optional[str]:
+        
+        print(f"[VERIFY_CALL] cond={self.success_condition}, url={self.page.url}")
         
         if not self.success_condition:
             return None  # 조건 없으면 통과
@@ -905,6 +909,18 @@ class NavigationLoop:
         Args:
             status: 'declare_success' | 'declare_failure' | 'timeout'
         """
+        import traceback
+        print(f"[FINALIZE_CALL] status={status}")
+        traceback.print_stack()
+        
+        # 페이지 전환 직후 finalize 시 새 페이지 로깅 누락 방지
+        current_logger_url = self.logger._current_page.url if self.logger._current_page else None
+        if current_logger_url != self.page.url:
+            self.logger.end_page()
+            self.logger.start_page(self.page.url)
+        else:
+            print(f"[FINALIZE_LOG_FIX] SKIP (same url)")
+        
         # 현재 페이지 히스토리에 추가 (마지막 페이지 누락 방지)
         self.page_history.add_page(self.page.url, "", "finalize")
         
