@@ -110,6 +110,7 @@ class NavigationAILog:
         self._step_counter = 0
         self._current_page: Optional[PageLog] = None
         self._pages: List[PageLog] = []
+        self.token_stats: Optional[Dict] = None 
 
     def start_page(self, url: str):
         """페이지 진입 시 호출"""
@@ -166,12 +167,17 @@ class NavigationAILog:
         self.is_success = is_success
         self.total_duration_ms = int((time.time() - self._start_time) * 1000)
 
+    def set_token_stats(self, stats: Dict):
+        """세션 토큰/비용 통계 기록"""
+        self.token_stats = stats
+    
     def to_dict(self) -> Dict:
         return {
             "session_id": self.session_id,
             "persona_age": self.persona_age,
             "is_success": self.is_success,
             "total_duration_ms": self.total_duration_ms,
+            "token_stats": self.token_stats,
             "pages": [p.to_dict() for p in self._pages],
         }
 

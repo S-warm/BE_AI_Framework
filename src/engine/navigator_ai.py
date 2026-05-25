@@ -114,3 +114,10 @@ class NavigatorAI:
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.step_logs = []
+        
+    def reset_session_stats(self):
+        """세션 시작 시 토큰/비용 카운터 리셋"""
+        self.total_prompt_tokens = 0
+        self.total_completion_tokens = 0
+        self.total_tokens = 0
+        self.total_cost = 0.0

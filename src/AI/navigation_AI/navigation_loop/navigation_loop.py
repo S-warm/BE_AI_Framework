@@ -143,6 +143,7 @@ class NavigationLoop:
         age = int(persona.age_group.replace('s', ''))
         self.logger = NavigationAILog(persona_age=age)
         self.logger.start_page(self.current_url)
+        self.navigator_ai.reset_session_stats()  # 세션 토큰 카운터 리셋
         
         # 목표 파싱 (최초 1회)
         self.parsed_task = parse_goal(goal, self.navigator_ai)
@@ -854,6 +855,8 @@ class NavigationLoop:
             self.logger.end_page()
             self.logger.start_page(self.page.url)
         
+        # 토큰/비용 통계 기록 (if 밖으로 이동)
+        self.logger.set_token_stats(self.navigator_ai.get_stats())
         # 현재 페이지 히스토리에 추가 (마지막 페이지 누락 방지)
         self.page_history.add_page(self.page.url, "", "finalize")
         
