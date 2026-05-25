@@ -46,15 +46,10 @@ def _calc_wcag_label(score: int) -> str:
 
 class WCAGChecker:
 
-    def __init__(
-        self,
-        page: Page,
-        uploader: Optional[S3Uploader] = None,
-        navigator_ai=None,  # OpenAI 클라이언트 (GPT-4o 번역용)
-    ):
+    def __init__(self, page, uploader=None, navigator_ai=None):
         self.page = page
         self.uploader = uploader
-        self.navigator_ai = navigator_ai  # description 한국어 번역에 사용
+        self.navigator_ai = navigator_ai
 
     def run(self, urls: List[str], date_prefix: str) -> Dict:
         """
@@ -140,49 +135,6 @@ class WCAGChecker:
             "violations": violations,
         }
 
-    def _parse_violations(self, raw: List[Dict]) -> List[Dict]:
-        """
-        axe-core violations → 우리 포맷으로 변환
-
-        각 violation에서:
-        - impact: severity로 변환 (IMPACT_MAP)
-        - nodes[0].html: 실제 위반된 DOM 요소
-        - help: GPT-4o로 한국어 번역 → description
-        - tags: wcag 기준 번호 추출
-        - uuid: 동적 생성
-        """
-        result = []
-        for v in raw:
-            severity = IMPACT_MAP.get(v.get("impact", "minor"), "Minor")
-            print(f"[TAGS] {v.get('tags')}")
-
-            # 위반된 DOM 요소 (첫 번째 노드만)
-            html = ""
-            if v.get("nodes"):
-                html = v["nodes"][0].get("html", "")
-
-            # wcag 기준 번호 추출
-            wcag_criteria = self._extract_wcag_criteria(v.get("tags", []))
-
-            # GPT-4o로 한국어 description 생성
-            help_text = v.get("help", "")
-            description = self._translate_description(help_text, severity)
-
-            result.append({
-                "wcagIssueId": str(uuid.uuid4()),   # 동적 uuid 생성
-                "title": v.get("description", ""),   # axe-core description을 title로
-                "severity": severity,
-                "description": description,           # GPT-4o 한국어 번역
-                "html": html,
-                "wcag_criteria": wcag_criteria,
-            })
-
-        # severity 순 정렬: Critical → Moderate → Minor
-        order = {"Critical": 0, "Moderate": 1, "Minor": 2}
-        result.sort(key=lambda x: order.get(x["severity"], 3))
-
-        return result
-
     def _extract_wcag_criteria(self, tags: List[str]) -> str:
         """
         axe-core tags에서 wcag 기준 번호 추출
@@ -197,30 +149,64 @@ class WCAGChecker:
                     return ".".join(digits)  # "143" → "1.4.3"
         return ""
 
-    def _translate_description(self, help_text: str, severity: str) -> str:
+    def _parse_violations(self, raw: List[Dict]) -> List[Dict]:
+        result = []
+        for v in raw:
+            severity = IMPACT_MAP.get(v.get("impact", "minor"), "Minor")
+            print(f"[TAGS] {v.get('tags')}")
+
+            html = ""
+            if v.get("nodes"):
+                html = v["nodes"][0].get("html", "")
+
+            wcag_criteria = self._extract_wcag_criteria(v.get("tags", []))
+
+            # title + description 한 번에 번역
+            title_en = v.get("description", "")
+            help_text = v.get("help", "")
+            translated = self._translate_violation(title_en, help_text, severity)
+
+            result.append({
+                "wcagIssueId": str(uuid.uuid4()),
+                "title": translated["title"],
+                "severity": severity,
+                "description": translated["description"],
+                "html": html,
+                "wcag_criteria": wcag_criteria,
+            })
+
+        order = {"Critical": 0, "Moderate": 1, "Minor": 2}
+        result.sort(key=lambda x: order.get(x["severity"], 3))
+
+        return result
+
+
+    def _translate_violation(self, title, help_text, severity):
         """
-        GPT-4o로 axe-core help 텍스트를 한국어 description으로 번역
-
-        navigator_ai가 없으면 원문 그대로 반환
+        title + description을 한 번에 한국어로 번역
         """
-        if not self.navigator_ai or not help_text:
-            return help_text
+        if not self.navigator_ai:
+            return {"title": title, "description": help_text}
 
-        prompt = f"""다음 WCAG 접근성 이슈 설명을 한국어로 번역해줘.
-심각도: {severity}
-원문: {help_text}
+        prompt = f"""다음 WCAG 접근성 이슈를 한국어로 번역해줘.
+    심각도: {severity}
+    영문 title: {title}
+    영문 description: {help_text}
 
-규칙:
-1. 전문적이고 간결하게 (1-2문장)
-2. 어떤 사용자에게 영향을 주는지 포함
-3. JSON으로 응답: {{"description": "..."}}"""
+    규칙:
+    1. title: 간결한 명사형 (10자 이내, 예: "색상 대비 부족")
+    2. description: 전문적이고 간결하게 (1-2문장, 어떤 사용자에게 영향을 주는지 포함)
+    3. JSON으로 응답: {{"title": "...", "description": "..."}}"""
 
         try:
             response = self.navigator_ai.call(prompt)
-            return response.get("description", help_text)
+            return {
+                "title": response.get("title", title),
+                "description": response.get("description", help_text)
+            }
         except Exception as e:
             print(f"[WCAG] 번역 실패: {e}")
-            return help_text
+            return {"title": title, "description": help_text}
 
     def _save(self, result: Dict, date_prefix: str):
         """로컬 저장 + S3 업로드"""
