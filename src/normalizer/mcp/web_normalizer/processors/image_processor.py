@@ -33,23 +33,26 @@ class ImageProcessor:
         7. StandardUINode 업데이트
         """
         try:
-            # 1. 이미지 노드 필터링
+            # 1. 전체 페이지 스크린샷 1회 (이미지 노드 유무와 무관하게 항상 캐싱)
+            print("전체 페이지 스크린샷 촬영 중...")
+            full_screenshot = page.screenshot(full_page=True)
+            print(f"스크린샷 완료: {len(full_screenshot) // 1024}KB")
+            
+            # 1-1. 스크린샷 캐싱
+            if self.screenshot_cache:
+                self.screenshot_cache.save(page.url, full_screenshot)
+            
+            # 2. 이미지 노드 필터링
             image_nodes = [n for n in nodes if n.type in ['image', 'icon']]
             
             if not image_nodes:
                 return
             
-            # 2. 전체 페이지 스크린샷 1회
-            print("전체 페이지 스크린샷 촬영 중...")
-            full_screenshot = page.screenshot(full_page=True)
+            # 3. 이미지 처리용 PIL 객체 (스크린샷 재사용)
             img = Image.open(io.BytesIO(full_screenshot))
-            print(f"스크린샷 완료: {img.size}")
+            print(f"이미지 크기: {img.size}")
             
-            # 2-1. 전체 스크린샷 캐싱
-            if self.screenshot_cache:
-                self.screenshot_cache.save(page.url, full_screenshot)
-            
-            # 3. IQR 크기 분류
+            # 4. IQR 크기 분류
             all_areas = [
                 n.properties.get('width', 0) * n.properties.get('height', 0)
                 for n in image_nodes
