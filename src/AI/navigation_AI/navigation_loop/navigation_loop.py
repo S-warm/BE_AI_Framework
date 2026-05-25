@@ -144,8 +144,6 @@ class NavigationLoop:
         self.logger = NavigationAILog(persona_age=age)
         self.logger.start_page(self.current_url)
         
-        print(f"[DEBUG_INIT] success_condition={success_condition}, type={type(success_condition)}")  # ← 여기
-        
         # 목표 파싱 (최초 1회)
         self.parsed_task = parse_goal(goal, self.navigator_ai)
         print(f"\n📋 파싱된 목표:")
@@ -361,7 +359,6 @@ class NavigationLoop:
     
     def _verify_success(self) -> Optional[str]:
         
-        print(f"[VERIFY_CALL] cond={self.success_condition}, url={self.page.url}")
         
         if not self.success_condition:
             return None  # 조건 없으면 통과
@@ -433,15 +430,10 @@ class NavigationLoop:
     def _parse_with_cache(self, url: str) -> List[StandardUINode]:
         cached = self.parsing_cache.get(url)
         if cached:
-            matches = [n for n in cached if 'Cloud' in (n.content or '') or 'Fleece' in (n.content or '')]
-            print(f"[TARGET_SEARCH] 캐시히트 - 'Cloud/Fleece' {len(matches)}개: {[(n.type, n.content[:30]) for n in matches]}")
             return cached
 
         nodes = self.normalizer.normalize(self.page)
         self.parsing_cache.save(url, nodes)
-        
-        matches = [n for n in nodes if 'Cloud' in (n.content or '') or 'Fleece' in (n.content or '')]
-        print(f"[TARGET_SEARCH] 신규파싱 - 'Cloud/Fleece' {len(matches)}개: {[(n.type, n.content[:30]) for n in matches]}")
         
         return nodes
     
@@ -465,22 +457,9 @@ class NavigationLoop:
             print(f"[WEAK_DELTA] True - list structure detected (containers={container_count}, no text)")
             return True
         
-        print(f"[WEAK_DELTA] False - nodes={len(delta)}, visible={len(visible)}")
         return False
 
     def _parse_incremental_with_cache(self, result: Dict, node: Optional[StandardUINode] = None, clicked_xpath: str = None) -> List[StandardUINode]:
-        print(f"clicked_xpath: {clicked_xpath}")
-        
-        debug = self.page.evaluate('''
-            (clickedXpath) => {
-                const getEl = (xpath) => document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                const clickedEl = getEl(clickedXpath);
-                const slickEl = document.getElementById('slick-slide00');
-                if (!clickedEl || !slickEl) return 'element not found';
-                return `contains: ${clickedEl.contains(slickEl)}, parent contains: ${clickedEl.parentElement?.contains(slickEl)}`;
-            }
-        ''', clicked_xpath)
-        #print(f"필터링 결과: {debug}")
 
         trigger = self._make_trigger(result, node)  # 수정
         cached = self.incremental_cache.get(self.page.url, trigger)
@@ -489,7 +468,6 @@ class NavigationLoop:
 
         self.page.wait_for_timeout(1000) # 렌더링 전에 파싱되는거 방식 시간 텀 줌
         delta = self.normalizer.normalize(self.page, clicked_xpath)
-        print(f"[DELTA_TYPES] {[(n.type, n.content[:20] if n.content else '') for n in delta]}")
         
         if self._is_weak_delta(delta):
             print("[WEAK_DELTA] 증분 빈약 → 전체 파싱 fallback")
@@ -534,36 +512,12 @@ class NavigationLoop:
                 print(f"[SECTION DEBUG] {node.id} | xpath:{node.metadata.get('xpath')} | parent_tag:{node.metadata.get('parent_tag')} | ancestors:{node.metadata.get('ancestor_tags')}")
         """
         
-        # 디버그: 목표 논문 추적
-        target_kw = "프롬프트 기반 감성"
-        matches = [n for n in nodes if target_kw in (n.content or "")]
-        print(f"[TRACK] after pre_attentive: {len(matches)}개 매칭")
-        for m in matches:
-            print(f"  - type={m.type}, y={m.properties.get('y')}, content={m.content[:50]}")
-        
         sections_raw = group_by_html_tag(nodes, viewport_height)
-        
-        # 디버그: 섹션 분리 후
-        for section_name, raw_nodes in sections_raw.items():
-            matches = [n for n in raw_nodes if target_kw in (n.content or "")]
-            print(f"[TRACK] section={section_name}: {len(matches)}개 매칭")
 
         sections_processed = {}
         for section_name, raw_nodes in sections_raw.items():
-            if section_name == 'nav':
-                for n in raw_nodes:
-                    print(f"[NAV_RAW] {n.type} '{n.content}' y={n.properties.get('y')} h={n.properties.get('height')}")
                     
             classified = classify_by_percentile(raw_nodes)
-            
-            if section_name == 'nav':
-                for n in classified:
-                    print(f"[NAV_CLASSIFIED] {n.type} '{n.content}' tier={n.properties.get('tier')}")
-            
-            # 디버그: tier 분류 후
-            matches = [n for n in classified if target_kw in (n.content or "")]
-            for m in matches:
-                print(f"[TRACK] {section_name}/{m.properties.get('tier')}: {m.content[:50]}")
             
             sorted_nodes = sort_by_y_position(classified)
             if persona:
@@ -572,12 +526,6 @@ class NavigationLoop:
                 print(f"[VISION_FILTER] {section_name}: {len(sorted_nodes)} → {len(filtered)} ({persona.age_group})")
                 sections_processed[section_name] = filtered
                 
-                # 디버그: persona 필터 후
-                matches = [n for n in filtered if target_kw in (n.content or "")]
-                print(f"[TRACK] {section_name} after persona: {len(matches)}개 매칭")
-                
-                print(f"[VISION_FILTER] {section_name}: {len(sorted_nodes)} → {len(filtered)} ({persona.age_group})")
-                sections_processed[section_name] = filtered
                 
             else:
                 sections_processed[section_name] = sorted_nodes
@@ -585,16 +533,6 @@ class NavigationLoop:
         print(f"[SECTIONS] {list(sections_processed.keys())}")
         for k, v in sections_processed.items():
             print(f"  {k}: {len(v)}개")
-            
-        for k, v in sections_processed.items():
-            for i, node in enumerate(v):
-                if node.properties.get('tier') == '상':
-                    print(f"  [{k}][상][{i}] {node.type} '{node.content[:30] if node.content else '[no text]'}'")
-
-        for k, v in sections_processed.items():
-            for n in v:
-                if 'Cloud' in (n.content or '') or 'Fleece' in (n.content or ''):
-                    print(f"[TARGET_TIER] {k} tier={n.properties.get('tier')} type={n.type} content={n.content[:40]}")
 
         self.last_removed_nodes = removed_nodes
         return sections_processed
@@ -909,17 +847,12 @@ class NavigationLoop:
         Args:
             status: 'declare_success' | 'declare_failure' | 'timeout'
         """
-        import traceback
-        print(f"[FINALIZE_CALL] status={status}")
-        traceback.print_stack()
         
         # 페이지 전환 직후 finalize 시 새 페이지 로깅 누락 방지
         current_logger_url = self.logger._current_page.url if self.logger._current_page else None
         if current_logger_url != self.page.url:
             self.logger.end_page()
             self.logger.start_page(self.page.url)
-        else:
-            print(f"[FINALIZE_LOG_FIX] SKIP (same url)")
         
         # 현재 페이지 히스토리에 추가 (마지막 페이지 누락 방지)
         self.page_history.add_page(self.page.url, "", "finalize")
@@ -933,7 +866,6 @@ class NavigationLoop:
         
         self.logger.finalize(is_success=(final_status == 'success'))
         saved_path = self.logger.save(self.log_dir or "logs/")
-        print(f"[DEBUG] saved_path: {saved_path}")
 
         if self.uploader:
             s3_prefix = f"raw/{self.session_dir or 'logs'}"
