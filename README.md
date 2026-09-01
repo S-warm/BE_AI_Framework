@@ -6,8 +6,10 @@
 
 ### 연령별 인지제약 기반 AI 사용자 시뮬레이션 엔진
 
-**Prompt로 인간을 연기시키는 대신,  
-인간이 인식하지 못하는 정보는 AI에게도 보여주지 않습니다.**
+<br/>
+
+> **Prompt로 인간을 연기시키는 대신,  
+> 인간이 인식하지 못하는 정보는 AI에게도 보여주지 않습니다.**
 
 <br/>
 
@@ -24,14 +26,17 @@
 ## 📌 Project Overview
 
 기존 LLM 기반 UX 테스트는 AI에게 `"70대 사용자처럼 행동하세요"`와 같은 Persona Prompt를 제공하더라도,  
-AI가 실제로는 **페이지 전체 DOM과 풍부한 Context를 인식한 상태에서 판단한다는 한계**가 있습니다.
+AI가 실제로는 **페이지 전체 DOM과 충분한 Context를 인식한 상태에서 판단한다는 한계**가 있습니다.
 
 실제 사용자는 그렇지 않습니다.
 
-작은 글씨를 놓칠 수 있고, 낮은 대비의 요소를 인식하지 못할 수 있으며,  
-한 번에 기억할 수 있는 정보와 탐색할 수 있는 범위에도 한계가 있습니다.
+- 작은 글씨를 놓칠 수 있습니다.
+- 낮은 대비의 요소를 인식하지 못할 수 있습니다.
+- 한 번에 기억할 수 있는 정보에는 한계가 있습니다.
+- 웹페이지 전체가 아니라 일부 영역을 순차적으로 탐색합니다.
 
-UX-Swarm은 이 차이를 줄이기 위해 **인간의 인지적 제약을 Prompt가 아닌 Python 코드 레벨에서 적용**했습니다.
+UX-Swarm은 이러한 차이를 줄이기 위해  
+**인간의 인지적 제약을 Prompt가 아닌 Python 코드 레벨에서 적용**했습니다.
 
 ```text
 Prompt-based Persona
@@ -62,32 +67,33 @@ Navigator AI
 Action
 ```
 
-즉, AI에게 특정 연령대를 연기하도록 요구하는 것이 아니라  
-**각 Persona가 실제로 인식할 수 있도록 제한된 정보 안에서 행동을 결정하도록 설계한 시뮬레이션 엔진**입니다.
+즉, AI에게 특정 연령대를 단순히 연기하도록 요구하는 것이 아니라  
+**각 Persona가 인식할 수 있는 정보 자체를 제한한 상태에서 행동을 결정하도록 설계한 AI 사용자 시뮬레이션 엔진**입니다.
 
 ---
 
 ## 👤 My Role
 
-**4인 팀 팀장 · AI Framework 전체 설계 및 개발**
+### 4인 팀 팀장 · AI Framework 전체 설계 및 개발
 
-프로젝트 아이디어 구체화부터 AI Framework의 구조 설계, 웹 탐색 엔진, 인지제약 시스템,  
-캐싱 및 대규모 로그 분석 파이프라인까지 AI 영역의 핵심 시스템을 담당했습니다.
+프로젝트 아이디어 구체화부터 AI Framework의 구조 설계,  
+웹 탐색 엔진, 인지제약 시스템, Memory, Cache, 로그 분석 파이프라인까지  
+AI 영역의 핵심 시스템을 담당했습니다.
 
 | Area | Contribution |
 |---|---|
-| AI Framework | 전체 구조 설계 및 핵심 모듈 개발 |
-| WebNormalizer | DOM → Standard UI Node 표준화 |
-| Cognitive Layer | Pre-attentive / 연령별 인지제약 설계 |
-| Navigation | Section / Tier 기반 절차적 탐색 엔진 |
-| Agent Memory | Working / Task / Context / Long-Term Memory |
-| Web Automation | Playwright 기반 실제 웹사이트 탐색 |
-| Dynamic Web | MutationObserver 기반 증분 파싱 및 SPA 대응 |
-| Vision | Claude Vision + 이미지 분류 / 색상 추출 |
-| Cache | Parsing / Incremental / Screenshot / pHash Cache |
-| Reliability | Task Parser, Success Verification, 새 탭 처리 |
-| Analysis Pipeline | Step Functions + Lambda 기반 로그 분석 |
-| Optimization | Prompt Context, Parsing, Vision 호출 최적화 |
+| **AI Framework** | 전체 구조 설계 및 핵심 모듈 개발 |
+| **WebNormalizer** | DOM → Standard UI Node 표준화 |
+| **Cognitive Layer** | Pre-attentive / 연령별 인지제약 설계 |
+| **Navigation** | Section / Tier 기반 절차적 탐색 엔진 |
+| **Agent Memory** | Working / Task / Context / Long-Term Memory |
+| **Web Automation** | Playwright 기반 실제 웹사이트 탐색 |
+| **Dynamic Web** | MutationObserver 기반 증분 파싱 및 SPA 대응 |
+| **Vision** | Claude Vision 기반 이미지 분석 및 색상 정보 추출 |
+| **Cache** | Parsing / Incremental / Screenshot / pHash Cache |
+| **Reliability** | Task Parser / Success Verification / 새 탭 처리 |
+| **Analysis Pipeline** | Step Functions + Lambda 기반 로그 분석 |
+| **Optimization** | Prompt Context / Parsing / Vision 호출 최적화 |
 
 ---
 
@@ -101,31 +107,19 @@ Action
 
 UX-Swarm은 **Web Application과 AI Simulation Engine을 분리**했습니다.
 
-```text
-React
-  ↓
-Spring Boot
-  ↓
-Redis / Celery
-  ↓
-FastAPI AI Framework
-  ↓
-Playwright Simulation Workers
-  ↓
-S3 Raw Logs
-  ↓
-Step Functions + Lambda
-  ↓
-Auditor / Aggregation
-  ↓
-Result Dashboard
-```
+- **React** — 프로젝트 생성 및 결과 Dashboard
+- **Spring Boot** — 사용자 및 서비스 API
+- **FastAPI** — AI Framework Interface
+- **Redis + Celery** — Simulation Task Queue
+- **Playwright Worker** — 실제 브라우저 기반 Persona Simulation
+- **S3** — Screenshot / Log / 분석 데이터 저장
+- **Step Functions + Lambda** — 후처리 분석 및 결과 생성
 
 Spring Boot는 사용자 요청과 서비스 API를 담당하고,  
 FastAPI 기반 AI Framework는 실제 웹 탐색과 Persona Simulation을 담당합니다.
 
-시뮬레이션 작업은 Redis + Celery Queue를 통해 Worker에 분배하고,  
-대용량 로그와 Screenshot은 S3에 저장한 뒤 별도의 분석 파이프라인에서 처리하도록 분리했습니다.
+시뮬레이션과 분석 작업을 분리해  
+실행 상태와 대규모 로그 처리를 서로 독립적으로 관리하도록 구성했습니다.
 
 ---
 
@@ -135,7 +129,7 @@ FastAPI 기반 AI Framework는 실제 웹 탐색과 Persona Simulation을 담당
   <img src="https://raw.githubusercontent.com/S-warm/.github/main/images/ai_architecture.png" width="1000"/>
 </p>
 
-AI Framework의 핵심은 다음 흐름입니다.
+AI Framework의 핵심 흐름은 다음과 같습니다.
 
 ```text
 URL + Goal
@@ -148,7 +142,7 @@ Standard UI Node
     ↓
 Pre-attentive Processing
     ↓
-Section / Tier Scanning
+Section / Tier Navigation
     ↓
 Age-based Cognitive Constraints
     ↓
@@ -165,7 +159,7 @@ Re-observe
 
 Navigator AI는 웹사이트의 전체 정보를 직접 전달받지 않습니다.
 
-Python Layer에서 먼저 웹 정보를 표준화하고 Persona의 인지 조건에 따라 제한한 뒤,  
+Python Layer에서 웹 정보를 표준화하고 Persona의 인지 조건에 따라 제한한 뒤,  
 **현재 Persona가 인식할 수 있는 Context만 AI에게 전달**합니다.
 
 ---
@@ -174,9 +168,9 @@ Python Layer에서 먼저 웹 정보를 표준화하고 Persona의 인지 조건
 
 ## 01. Code-Level Cognitive Constraint
 
-### Prompt가 아니라 Input 자체를 제한했습니다
+### Prompt가 아니라 Input 자체를 제한
 
-처음에는 LLM에게 연령별 Persona를 Prompt로 부여하는 방법도 검토했습니다.
+처음에는 LLM에게 연령별 Persona를 Prompt로 부여하는 방식도 검토했습니다.
 
 하지만 Prompt만 변경하면 AI는 여전히 전체 DOM을 알고 있습니다.
 
@@ -192,9 +186,10 @@ Python Layer에서 먼저 웹 정보를 표준화하고 Persona의 인지 조건
 - 페이지 전체 구조
 ```
 
-이는 인간의 제한된 인지 환경과 다르다고 판단했습니다.
+이는 실제 사용자의 제한된 인지 환경과 다르다고 판단했습니다.
 
-그래서 UX-Swarm에서는 **LLM 호출 이전에 Python이 인식 가능한 정보를 결정**합니다.
+그래서 UX-Swarm에서는  
+**LLM 호출 이전에 Python이 인식 가능한 정보를 결정**합니다.
 
 ```text
 DOM
@@ -214,7 +209,7 @@ LLM
 
 ### 2-Layer Cognitive System
 
-**Layer 1 — Universal Cognitive Constraints**
+#### Layer 1 — Universal Cognitive Constraints
 
 - 시각적 현저성 기반 Pre-attentive Processing
 - 색상 대비
@@ -223,28 +218,26 @@ LLM
 - 제한된 Working Memory
 - 순차적 정보 탐색
 
-**Layer 2 — Persona-specific Constraints**
+#### Layer 2 — Persona-specific Constraints
 
-- 20대 / 50대 / 70대 기준 인지 파라미터
+- 20대 / 50대 / 70대 Persona
 - 연령별 시각적 인지 차이
 - Digital Literacy
 - Persona별 Working Memory Limit
-
-핵심 원칙은 단순합니다.
 
 > **AI에게 인간처럼 행동하라고 지시하는 것이 아니라,  
 > 인간처럼 제한된 정보를 보고 판단하도록 만든다.**
 
 ---
 
-## 02. WebNormalizer — 웹을 AI가 이해할 수 있는 형태로 표준화
+## 02. WebNormalizer
 
-실제 웹사이트의 DOM은 AI가 그대로 사용하기에는 지나치게 복잡합니다.
+### 복잡한 DOM을 Standard UI Node로 표준화
 
-중첩된 `div`, CSS, Script, 숨겨진 요소, 반복되는 Container 등이 포함되며  
-사이트마다 구조도 모두 다릅니다.
+실제 웹사이트의 DOM에는 중첩된 Container, Script, CSS, Hidden Element 등  
+AI가 직접 사용하기에 불필요하거나 복잡한 정보가 많이 포함됩니다.
 
-이를 해결하기 위해 WebNormalizer를 설계했습니다.
+이를 공통된 형태로 변환하기 위해 `WebNormalizer`를 설계했습니다.
 
 ```text
 Raw DOM
@@ -253,40 +246,38 @@ WebNormalizer
    ↓
 Standard UI Node
 
-{
-  type,
-  content,
-  bbox,
-  font_size,
-  contrast,
-  selector,
-  xpath,
-  ancestor_tags,
-  image_analysis,
-  ...
-}
+type
+content
+bbox
+font_size
+contrast
+selector
+xpath
+ancestor_tags
+image_analysis
+...
 ```
 
 ### 책임 분리
 
-WebNormalizer에서는 **웹 구조를 정규화하는 역할만 수행**합니다.
-
 ```text
-Normalizer
-→ 렌더링되지 않는 정보 제거
-→ DOM 구조 표준화
-→ UI 속성 추출
+WebNormalizer
+├─ 렌더링되지 않는 정보 제거
+├─ DOM 구조 표준화
+└─ UI 속성 추출
+
 
 Cognitive Layer
-→ 작은 요소 제거
-→ 낮은 대비 요소 제거
-→ Persona별 인지 가능 여부 판단
+├─ 작은 요소 필터링
+├─ 낮은 대비 요소 필터링
+└─ Persona별 인지 가능 여부 판단
 ```
 
-인지 기준까지 Normalizer에 넣지 않은 이유는  
-웹 파싱과 인간 인지 시뮬레이션이라는 서로 다른 책임을 분리하기 위해서였습니다.
+웹 구조를 정규화하는 역할과  
+Persona의 인지 가능 여부를 판단하는 역할을 분리했습니다.
 
-이를 통해 향후 입력이 Web DOM이 아니더라도
+이를 통해 Web DOM 자체에 강하게 결합하지 않고  
+향후 다른 UI 입력 구조로 확장할 수 있도록 설계했습니다.
 
 ```text
 Web
@@ -300,20 +291,18 @@ Standard UI Node
 Cognitive Layer
 ```
 
-형태로 확장할 수 있도록 설계했습니다.
-
 ---
 
 ## 03. Section-Based Procedural Navigation
 
 ### 전체 DOM을 한 번에 탐색하지 않습니다
 
-초기 방식에서는 AI에게 많은 DOM 요소를 한 번에 전달했습니다.
+실제 사용자는 페이지 전체를 동시에 읽지 않습니다.
 
-하지만 실제 인간은 페이지 전체를 동시에 읽지 않고  
-특정 영역에 주의를 두며 순차적으로 탐색합니다.
+특정 영역에 주의를 두고  
+중요도가 높은 요소부터 순차적으로 탐색합니다.
 
-이를 반영하기 위해 웹페이지를 의미 단위로 나눴습니다.
+이를 반영해 웹페이지를 의미 단위 Section으로 나눴습니다.
 
 ```text
 HEADER
@@ -325,7 +314,7 @@ MAIN
 FOOTER
 ```
 
-각 Section 내부에서는 다시 시각적 우선순위에 따라 Tier를 구성합니다.
+각 Section 내부에서는 다시 Visual Priority를 기반으로 Tier를 구성합니다.
 
 ```text
 Section
@@ -334,12 +323,12 @@ Section
  └── Low Tier
 ```
 
-AI는 높은 시각적 우선순위의 요소부터 탐색하고,  
+Navigator AI는 높은 우선순위의 요소부터 탐색하고,  
 필요한 경우 다음 Tier 또는 Section으로 이동합니다.
 
 ### DOM 계층 구조 처리
 
-실제 웹사이트에서는 다음과 같이 깊은 구조가 흔합니다.
+실제 DOM은 다음과 같이 깊게 중첩됩니다.
 
 ```text
 header
@@ -350,7 +339,8 @@ header
              └─ a
 ```
 
-단순 `parent_tag`만 사용하면 이 `<a>`가 Header에 속한다는 사실을 알 수 없었습니다.
+단순 `parent_tag`만 사용하면  
+`<a>`가 Header 내부에 있다는 의미 구조를 잃게 됩니다.
 
 따라서 DOM 추출 단계에서 전체 조상 태그를 저장했습니다.
 
@@ -358,31 +348,32 @@ header
 ancestor_tags = ["li", "ul", "nav", "div", "header"]
 ```
 
-이를 기반으로 Section을 분류하여 깊게 중첩된 실제 웹사이트에서도 의미 구조를 유지했습니다.
+이를 기반으로 깊게 중첩된 실제 웹사이트에서도  
+Node의 Section 정보를 유지하도록 구현했습니다.
 
 ---
 
-## 04. Stateful Agent over Stateless LLM
+## 04. Stateful Agent Architecture
 
-### 처음 했던 잘못된 가정
+### LLM 호출 사이의 상태를 Application Layer에서 관리
 
-초기 설계에서는 증분 DOM만 AI에게 전달하면  
-LLM이 이전 페이지 상태를 기억할 수 있다고 생각했습니다.
+초기 설계에서는 변경된 DOM Delta만 전달하면  
+LLM이 이전 페이지 상태를 이어서 이해할 수 있을 것이라고 생각했습니다.
 
 ```text
 Previous DOM
    +
 Delta DOM
    ↓
-LLM이 이전 상태를 기억할 것이라고 가정
+LLM
 ```
 
-하지만 API 호출 간 상태는 애플리케이션에서 직접 관리해야 했고,  
-Delta만 전달해서는 Navigator가 이전 페이지 상태를 안정적으로 유지할 수 없었습니다.
+하지만 독립적인 API 호출 사이에서 필요한 상태와 Context는  
+Application Layer가 직접 관리해야 했습니다.
 
-그래서 **Memory의 책임을 LLM이 아닌 Python Layer로 이동**했습니다.
+그래서 Memory의 책임을 Python Layer로 이동했습니다.
 
-### Memory Architecture
+### 4-Layer Memory
 
 ```text
 MemoryManager
@@ -392,67 +383,47 @@ MemoryManager
  └── LongTermMemory
 ```
 
-**WorkingMemory**
+| Memory | Responsibility |
+|---|---|
+| **WorkingMemory** | 최근 행동 및 현재 탐색 정보 |
+| **TaskMemory** | Goal / Step / 실패 횟수 |
+| **ContextMemory** | 현재 Persona가 인식 중인 UI 상태 |
+| **LongTermMemory** | 반복 실패 및 Episode Summary |
 
-최근 행동과 현재 탐색 정보를 관리합니다.
-
-**TaskMemory**
-
-현재 Goal과 Step, 실패 횟수를 관리합니다.
-
-**ContextMemory**
-
-현재 페이지에서 Persona가 인식하고 있는 UI 상태를 관리합니다.
-
-**LongTermMemory**
-
-반복 실패와 Episode Summary 등 장기적으로 필요한 정보를 관리합니다.
-
-매 LLM 호출 시 필요한 Memory를 조합해 Context를 생성합니다.
+각 Navigation Step마다 필요한 Memory를 조합해 LLM Context를 생성합니다.
 
 ```text
-Python Memory
-     ↓
+Application Memory
+        ↓
 Prompt Context
-     ↓
-Stateless LLM
-     ↓
+        ↓
+LLM
+        ↓
 Action
-     ↓
+        ↓
 Memory Update
 ```
 
-이 과정에서 증분 파싱의 역할도 다시 정의했습니다.
+이 과정에서 Incremental Parsing과 Context Compression의 역할도 분리했습니다.
 
 ```text
-초기 생각
-
-Incremental Parsing
-→ LLM에게 Delta만 전달
-→ Token 절감
-
-
-최종 설계
-
 Incremental Parsing
 → Python ContextMemory를 효율적으로 갱신
 
 Context Compression
-→ 실제 LLM Token 절감
+→ 실제 LLM에게 전달되는 Context를 축소
 ```
 
-이 경험을 통해 **웹 상태 관리와 LLM Context 최적화는 서로 다른 문제**라는 점을 구조적으로 분리했습니다.
+> **웹 상태 관리와 LLM Context 최적화는 서로 다른 문제로 분리해 해결했습니다.**
 
 ---
 
 ## 05. Task Parser + Python Success Verification
 
-### 300 Step을 반복하던 AI
+### 300 Step Timeout → 3 Step Success
 
-초기 E2E 테스트에서는 AI가 실제 목표에 도달했음에도  
-성공 여부를 정확하게 판단하지 못해 탐색을 계속하는 문제가 있었습니다.
-
-결과적으로 최대 Step까지 반복했습니다.
+초기 E2E 테스트에서는 AI가 목표에 도달한 뒤에도  
+성공 여부를 안정적으로 판단하지 못해 탐색을 계속하는 문제가 있었습니다.
 
 ```text
 Goal
@@ -461,7 +432,7 @@ Navigation
  ↓
 Target 도달
  ↓
-LLM이 성공 여부를 확신하지 못함
+성공 여부 판단 실패
  ↓
 다시 탐색
  ↓
@@ -470,17 +441,12 @@ LLM이 성공 여부를 확신하지 못함
 300 Step Timeout
 ```
 
-Prompt에
+Prompt에서 성공 조건을 반복적으로 강조하는 것만으로는  
+문제를 안정적으로 해결하지 못했습니다.
 
-```text
-"목표를 달성했다면 즉시 declare_success 하세요."
-```
+### Task Parser
 
-와 같은 경고도 추가했지만 안정적으로 해결되지 않았습니다.
-
-### 해결 1 — Task Parser
-
-자연어 Goal을 시뮬레이션 시작 시 한 번 구조화합니다.
+시뮬레이션 시작 시 자연어 Goal을 구조화했습니다.
 
 ```text
 Natural Language Goal
@@ -492,19 +458,17 @@ final_target
 success_condition
 ```
 
-### 해결 2 — Python Success Verification
+### Python Success Verification
 
-성공 여부와 같이 시스템 실행을 결정하는 중요한 분기를  
-LLM의 판단에만 맡기지 않았습니다.
-
-Navigation Loop 상단에서 Python이 직접 성공 조건을 검증합니다.
+성공 여부처럼 프로그램의 종료를 결정하는 Critical Control Flow를  
+LLM의 판단에만 의존하지 않도록 변경했습니다.
 
 ```text
 Navigation Step
       ↓
 Python Success Verification
       ↓
-SUCCESS? ─── Yes ──→ Finish
+SUCCESS? ── Yes ──→ Finish
       │
       No
       ↓
@@ -520,9 +484,7 @@ Navigator AI
 | Result | Timeout | **Success** |
 | Estimated API Cost | $0.0105 | **$0.0004** |
 
-> 위 수치는 `example.com` 기반 E2E 테스트에서 Task Parser와 Success Verification 적용 전후를 비교한 결과입니다.
-
-이 경험은 UX-Swarm의 중요한 설계 원칙으로 이어졌습니다.
+> `example.com` 기반 E2E 테스트에서 Task Parser와 Success Verification 적용 전후를 비교한 결과입니다.
 
 > **LLM에게 판단을 맡길 수는 있지만,  
 > 시스템의 Critical Control Flow까지 맡기지는 않는다.**
@@ -544,7 +506,9 @@ Navigator AI
   </sub>
 </p>
 
-Navigator AI는 단순히 다음 행동을 텍스트로 생성하는 것이 아니라,
+<br/>
+
+Navigator AI는 행동을 텍스트로 생성하는 데서 끝나지 않습니다.
 
 ```text
 Perception
@@ -562,17 +526,18 @@ Playwright Click / Input
 DOM Re-observation
 ```
 
-과정을 반복하며 **실제 브라우저를 직접 조작**합니다.
+실제 브라우저를 직접 조작한 뒤  
+변경된 환경을 다시 관찰하며 Navigation Loop를 반복합니다.
 
 ---
 
-# 🌐 Dynamic Web & Real-Site Reliability
+# 🌐 Dynamic Web & Optimization
 
 ## 06. Incremental Parsing
 
 현대 웹사이트는 클릭할 때마다 전체 페이지가 새로 로드되지 않습니다.
 
-Dropdown, Modal, SPA Component와 같이 일부 DOM만 변경되는 경우가 많기 때문에  
+Dropdown, Modal, SPA Component처럼 일부 DOM만 변경되는 경우가 많기 때문에  
 매 행동마다 전체 DOM을 다시 파싱하는 것은 비효율적입니다.
 
 UX-Swarm은 `MutationObserver` 기반 증분 파싱을 구현했습니다.
@@ -589,8 +554,6 @@ Incremental Parser
 ContextMemory Merge
 ```
 
-구조 역시 역할별로 분리했습니다.
-
 ```text
 WebNormalizerIncremental
  ├── MutationObserver   # 변경 감지
@@ -602,9 +565,10 @@ WebNormalizerIncremental
 
 ## 07. SPA Transition Detection
 
-쇼핑몰 실사이트 테스트 중 URL이 변경되지 않는 SPA 전환을 발견했습니다.
+실사이트 테스트 중  
+URL은 그대로지만 주요 UI 구조가 교체되는 SPA 전환을 발견했습니다.
 
-기존 로직:
+기존 로직은
 
 ```text
 URL changed
@@ -614,35 +578,33 @@ URL unchanged
 → Same Page
 ```
 
-이 방식으로는 카테고리 필터처럼 URL 없이 전체 상품 목록이 교체되는 상황을 탐지할 수 없었습니다.
+였기 때문에 카테고리 필터처럼  
+URL 없이 전체 목록이 교체되는 상황을 감지할 수 없었습니다.
 
-이를 위해 **Weak Delta Fallback**을 추가했습니다.
+이를 위해 Mutation Delta를 함께 확인하는 Fallback을 추가했습니다.
 
 ```text
 URL unchanged
      ↓
 Mutation Delta 검사
      ↓
-Text Node 없음
-+
-Container 3개 이상 변경
-     ↓
-List Structure Replacement로 판단
+큰 구조 변화 감지
      ↓
 Parsing Cache 삭제
      ↓
 Full Parsing Fallback
 ```
 
-단순 URL 변화가 아니라 **DOM 구조 변화까지 페이지 상태 판단에 활용**하도록 확장했습니다.
+단순 URL 변화가 아니라  
+**실제 DOM 구조 변화까지 페이지 상태 판단에 활용**하도록 확장했습니다.
 
 ---
 
 ## 08. Vision Pipeline & pHash Cache
 
-DOM만으로는 이미지가 무엇을 의미하는지 알 수 없습니다.
+DOM만으로는 이미지가 무엇을 의미하는지 파악하기 어렵습니다.
 
-따라서 이미지 요소는 별도의 Vision Pipeline으로 처리했습니다.
+따라서 이미지 Node는 별도의 Vision Pipeline으로 처리했습니다.
 
 ```text
 Full-page Screenshot
@@ -651,7 +613,7 @@ Bounding Box Crop
        ↓
 Claude Vision
        ↓
-type + description
+Type + Description
        ↓
 Optional Color Extraction
        ↓
@@ -667,31 +629,30 @@ Standard UI Node
 → page.screenshot() × 34
 ```
 
-화면 밖 요소에서는 Clip 오류도 발생했습니다.
+이 과정에서 반복적인 Browser I/O와  
+화면 밖 요소의 Clip 오류가 발생했습니다.
 
 이를 다음과 같이 변경했습니다.
 
 ```text
 page.screenshot(full_page=True) × 1
               ↓
-          PIL Crop
+           PIL Crop
               ↓
         Individual Images
 ```
 
-한 번의 Full-page Screenshot을 기준으로 각 이미지의 Bounding Box를 Crop하도록 변경해  
-반복적인 브라우저 Screenshot 호출과 화면 밖 Clip 오류를 함께 줄였습니다.
+브라우저에서는 Full-page Screenshot을 한 번만 생성하고,  
+각 이미지의 Bounding Box Crop은 Python에서 처리하도록 역할을 분리했습니다.
 
 ### pHash Cache
 
-이미지 URL을 Cache Key로 사용하면 같은 이미지가 압축되거나 크기가 변경됐을 때  
-다른 이미지로 인식됩니다.
+이미지 URL은 같은 시각 자료라도  
+크기·압축·CDN 경로에 따라 달라질 수 있습니다.
 
 따라서 URL 대신 **Perceptual Hash(pHash)** 를 Cache Key로 사용했습니다.
 
 ```text
-Same Visual Image
-
 /image/product_100.png
 /image/product_300.webp
 /cdn/compressed/product.jpg
@@ -701,7 +662,8 @@ Same Visual Image
       Same Cache
 ```
 
-이를 통해 시각적으로 동일한 이미지에 대한 Vision AI 중복 호출을 줄였습니다.
+이를 통해 시각적으로 동일한 이미지에 대한  
+Vision AI 중복 호출을 줄였습니다.
 
 ---
 
@@ -710,14 +672,15 @@ Same Visual Image
 ## 01. DBpia — 526개의 링크가 있는데 AI는 논문을 보지 못했다
 
 실사이트 검증 과정에서 DBpia 검색 결과 페이지의 목표 논문 링크가  
-DOM에는 존재하지만 AI에게 전달되지 않는 문제가 발생했습니다.
+DOM에는 존재하지만 AI Context에는 전달되지 않는 문제가 발생했습니다.
 
 ```text
-<a> Tags in DOM : 526
-Target after normalize : 0
+<a> Tags in DOM       : 526
+Target after normalize: 0
 ```
 
-처음부터 특정 모듈을 의심하는 대신 파싱 파이프라인 전체에 추적 로그를 삽입했습니다.
+특정 모듈을 바로 수정하지 않고  
+파싱 파이프라인 전체에서 목표 Node의 생존 여부를 추적했습니다.
 
 ```text
 normalize()
@@ -731,20 +694,14 @@ classify_by_percentile()
 persona.filter_nodes()
 ```
 
-각 단계에서 목표 논문 키워드의 생존 여부를 추적했습니다.
-
-```text
-[TRACK_NORMALIZE]
-[TRACK]
-```
-
-그 결과 `normalize()` 직후부터 목표 요소가 정상적으로 노출되지 않는 것을 확인했고,  
+각 단계에서 목표 논문 키워드가 남아 있는지를 추적한 결과,  
+`normalize()` 직후부터 문제가 발생하는 것을 확인했고  
 원인을 `TypeExtractor`까지 좁혔습니다.
 
 ### Root Cause
 
-`<body>`와 같은 Container가 자손의 `textContent`를 가지고 있다는 이유로  
-`text` Node로 분류되고 있었습니다.
+`<body>`와 같은 Container가 자손의 `textContent`를 가진다는 이유로  
+하나의 거대한 `text` Node로 분류되고 있었습니다.
 
 ```text
 <body>
@@ -768,18 +725,53 @@ div / section / body / header ...
 → always container
 ```
 
-Container의 직접 텍스트는 별도로 제한하여 의미를 보존했습니다.
+Container의 직접 텍스트만 별도로 제한해  
+구조와 의미를 함께 유지했습니다.
 
 ### Result
 
-수정 후 DBpia에서 20대 / 50대 / 70대 Persona 모두 실제 사이트 E2E 탐색을 완료했습니다.
+수정 후 DBpia에서  
+**20대 / 50대 / 70대 Persona 모두 실제 사이트 E2E 탐색을 완료**했습니다.
 
 > **파싱 파이프라인 문제는 추측으로 수정하지 않고,  
-> 각 단계의 입력과 출력을 추적해 데이터가 사라지는 정확한 지점을 찾는다.**
+> 각 단계의 입·출력을 추적해 데이터가 사라지는 정확한 지점을 찾았습니다.**
 
 ---
 
-## 02. New Tab Race Condition
+## 02. Prompt Context Explosion
+
+Main Section에 수백 개의 Node가 존재하면  
+중·하위 Tier 전체를 Prompt에 전달하면서 **85,000자 이상**의 Context가 생성됐습니다.
+
+하지만 탐색한 영역과 아직 탐색하지 않은 영역은  
+필요한 정보 수준이 서로 달랐습니다.
+
+```text
+Explored Tier
+→ element_id + type + content
+→ 다시 돌아가 행동할 수 있을 정도의 정보 유지
+
+Unexplored Tier
+→ type별 개수
+→ 구조 파악에 필요한 정보만 유지
+```
+
+### Result
+
+```text
+Before
+85,000+ chars
+
+After
+수천 자 수준
+```
+
+단순 문자열 자르기가 아니라  
+**Context가 어떤 판단에 사용되는지를 기준으로 정보 밀도를 조절**했습니다.
+
+---
+
+## 03. New Tab Race Condition
 
 DBpia 논문 링크는 `target="_blank"`로 새 탭을 생성했습니다.
 
@@ -789,7 +781,8 @@ DBpia 논문 링크는 `target="_blank"`로 새 탭을 생성했습니다.
 context.pages[-1]
 ```
 
-을 확인했는데, 새 탭 생성은 비동기이므로 실행 시점에 따라 성공 여부가 달라지는 Race Condition이 발생했습니다.
+을 확인했는데, 새 탭 생성은 비동기이므로  
+실행 시점에 따라 성공 여부가 달라지는 Race Condition이 발생했습니다.
 
 이를 해결하기 위해 책임을 재설계했습니다.
 
@@ -812,52 +805,23 @@ ActionExecutor
 → Return new_page
 
 NavigationLoop
-→ Page Swap only
+→ Page Swap
 ```
 
-`ActionExecutor`가 클릭과 그 결과로 발생한 새 탭까지 책임지도록 변경하고,  
+`ActionExecutor`가 클릭과 그 결과로 발생한 새 탭까지 책임지고,  
 NavigationLoop는 반환된 Page를 교체하는 역할만 담당하도록 분리했습니다.
 
 ---
 
-## 03. Prompt Context Explosion
+<details>
+<summary><b>📚 그 외 해결한 주요 문제 보기</b></summary>
 
-Main Section에 수백 개의 Node가 존재하면  
-중·하위 Tier 전체를 Prompt에 전달하면서 **85,000자 이상**의 Context가 생성됐습니다.
+<br/>
 
-하지만 탐색하지 않은 Tier의 모든 세부 정보가 필요한 것은 아니었습니다.
+### Stateful Object Reuse
 
-따라서 Context의 목적에 따라 표현 방법을 나눴습니다.
-
-```text
-Explored Tier
-→ element_id + type + content
-→ 다시 돌아가 행동할 수 있어야 함
-
-Unexplored Tier
-→ type별 개수만 전달
-→ 구조 파악만 필요
-```
-
-```text
-Before
-85,000+ chars
-
-After
-수천 자 수준
-```
-
-단순 문자열 자르기가 아니라  
-**Context가 어떤 판단에 사용되는지를 기준으로 정보량을 조절**했습니다.
-
----
-
-## 04. Stateful Object Reuse
-
-Guide AI와 Persona Simulation은 비용 절감과 Cache 공유를 위해  
-일부 Stateful Object를 재사용했습니다.
-
-하지만 이 과정에서 다음 상태 오염 문제가 발생했습니다.
+Guide AI와 Persona Simulation 사이에서  
+일부 Stateful Object와 Cache를 재사용하면서 상태 오염 문제가 발생했습니다.
 
 ```text
 Guide AI
@@ -873,11 +837,11 @@ Persona Simulation
 
 - Persona 로그가 Guide 폴더에 저장
 - Screenshot Cache 공유 실패
-- Persona가 성공 페이지에서 시작해 즉시 성공 처리
+- Persona가 성공 페이지에서 시작해 즉시 성공
 
-등의 문제가 발생했습니다.
+문제가 발생했습니다.
 
-각 실행 단계 진입 시 초기 상태를 명시적으로 보장하도록 변경했습니다.
+각 실행 단계 진입 시 초기 상태를 명시적으로 보장하도록 수정했습니다.
 
 ```text
 Guide Finish
@@ -894,11 +858,6 @@ Persona Start
 
 ---
 
-<details>
-<summary><b>그 외 해결한 주요 문제 보기</b></summary>
-
-<br/>
-
 ### MutationObserver
 
 - `display:none → block` 속성 변경 감지
@@ -909,7 +868,7 @@ Persona Start
 ### NavigationLoop
 
 - `step_count` 증가 누락으로 발생 가능한 무한 루프 수정
-- SectionNavigator 반복 재생성으로 인한 탐색 상태 초기화 해결
+- SectionNavigator 재생성으로 인한 탐색 상태 초기화 해결
 - `header → nav → main → footer` 순서 명시적 보장
 - 클릭 후 URL 변경 대기 추가
 
@@ -922,7 +881,7 @@ Persona Start
 
 - 설계 문서와 실제 `final_issues.json` Schema 불일치 수정
 - `20대` / `20s` S3 경로 규약 불일치 수정
-- S3 Prefix 전체 탐색 후 `session_id → key` Cache 생성
+- S3 Prefix 탐색 후 `session_id → key` Cache 생성
 
 ### Docker / AWS
 
@@ -936,8 +895,8 @@ Persona Start
 
 # ⚡ Performance & Optimization
 
-UX-Swarm은 대규모 Persona Simulation을 고려하여  
-브라우저 처리, LLM Context, Vision 호출, 로그 분석 각각에 최적화 전략을 적용했습니다.
+UX-Swarm은 대규모 Persona Simulation을 고려해  
+브라우저 처리, LLM Context, Vision 호출, 로그 분석 단계마다 최적화 전략을 적용했습니다.
 
 | Problem | Optimization | Result / Purpose |
 |---|---|---|
@@ -949,20 +908,29 @@ UX-Swarm은 대규모 Persona Simulation을 고려하여
 | 반복 DOM Parsing | Guide AI + ParsingCache | Persona 간 Parsing 결과 재사용 |
 | Dynamic DOM | Incremental Parsing | 변경 Node 중심 처리 |
 | 대규모 로그 | Map-Reduce Pipeline | 분석 단계 분산 |
-| 독립 분석 작업 | Step Functions Parallel | Lambda 5/6/7 병렬 처리 |
+| 독립 분석 작업 | Step Functions Parallel | 병렬 처리 |
 
-> 측정값은 개발 과정의 해당 E2E 테스트 조건에서 기록된 결과이며, 사이트와 시뮬레이션 조건에 따라 달라질 수 있습니다.
+> 측정값은 개발 과정의 해당 E2E 테스트 조건에서 기록한 결과이며,  
+> 대상 사이트와 시뮬레이션 조건에 따라 달라질 수 있습니다.
 
 ---
 
 # ☁️ Distributed Analysis Pipeline
 
-Persona Simulation에서 생성되는 대규모 로그를 한 번에 LLM에 전달하지 않고  
+Persona Simulation에서 생성되는 로그를 한 번에 하나의 LLM Context로 처리하지 않고  
 AWS Step Functions + Lambda 기반 분석 파이프라인으로 분리했습니다.
 
 <p align="center">
-  <img width="307" height="481" alt="스크린샷 2026-09-01 오후 4 29 25" src="https://github.com/user-attachments/assets/0af02872-ec71-4d59-9051-9dda043578e4" />
+  <img width="307" height="481" alt="AWS Step Functions Pipeline" src="https://github.com/user-attachments/assets/0af02872-ec71-4d59-9051-9dda043578e4" />
 </p>
+
+<p align="center">
+  <sub>
+    Persona Simulation 이후 S3 로그를 기반으로 실행되는 후처리 분석 파이프라인
+  </sub>
+</p>
+
+<br/>
 
 ```text
 S3 Raw Logs
@@ -990,49 +958,46 @@ Lambda 8
 Spring Boot POST
 ```
 
-### Lambda 4 — Issue Reduce
+### Issue Reduce
 
-연령별 분석 결과를 `text-embedding-3-small` Embedding 유사도로 비교하여  
-동일한 UX Issue를 병합합니다.
+연령별 분석 결과의 Embedding 유사도를 비교하여  
+동일하거나 유사한 UX Issue를 병합합니다.
 
-### Lambda 5 — AI Fix Suggestion
+### AI Fix Suggestion
 
-Issue가 발생한 URL의 DOM을 가져와 Claude Haiku를 이용해
+Issue가 발생한 UI 정보를 바탕으로  
+문제 요소의 개선 방향을 생성합니다.
 
 ```text
 Issue
  ↓
 Problem Element Selector
  ↓
-Current CSS
+Current UI / CSS
  ↓
 Before / After Fix
 ```
 
-형태의 수정 제안을 생성합니다.
+### Heatmap Aggregation
 
-### Lambda 6 — Heatmap Aggregation
+실패 좌표를 연령대별로 집계하고  
+가까운 Point를 Cluster로 묶어 Screenshot 기반 Heatmap 데이터로 가공합니다.
 
-실패 좌표를 연령대별로 집계하고 가까운 좌표를 Cluster로 묶어  
-실제 Screenshot 위에 UX Failure Point를 표시할 수 있도록 가공합니다.
+### Overview
 
-### Lambda 7 — Overview
-
-세션별 결과를 기반으로
+Session Result를 기반으로
 
 - Success Rate
 - Failure Rate
 - Average Duration
 - Average Actions
 
-등을 연령대별로 집계합니다.
+등의 지표를 연령대별로 집계합니다.
 
 ### Parallel Processing
 
-Lambda 5, 6, 7은 모두 Lambda 4의 결과를 필요로 하지만  
-서로에게는 의존하지 않습니다.
-
-따라서 순차 실행하지 않고 Step Functions의 Parallel State로 구성했습니다.
+서로 독립적인 후처리 작업은  
+Step Functions의 Parallel State를 이용해 동시에 처리하도록 구성했습니다.
 
 ```text
 Lambda 4
@@ -1046,9 +1011,12 @@ Lambda 8
 
 ---
 
-# 🔌 Service Communication Design
+<details>
+<summary><b>🔌 Service Communication Design 보기</b></summary>
 
-Spring Boot와 AI Framework가 내부 저장소 구조에 직접 의존하지 않도록  
+<br/>
+
+Spring Boot와 AI Framework가 내부 저장 구조에 직접 의존하지 않도록  
 서비스 간 통신은 REST Interface를 기준으로 설계했습니다.
 
 ```text
@@ -1059,7 +1027,7 @@ FastAPI REST API
 Redis / Celery
 ```
 
-Spring이 AI 서비스의 Redis Key를 직접 읽는 방식은 사용하지 않았습니다.
+Spring이 AI 서비스 내부의 Redis Key를 직접 읽는 방식은 사용하지 않았습니다.
 
 ```text
 Spring ─X→ AI Redis
@@ -1067,12 +1035,13 @@ Spring ─X→ AI Redis
 Spring → FastAPI → AI Internal Storage
 ```
 
-AI 내부 구현이 변경되더라도 Spring에 영향을 최소화하기 위한 선택입니다.
+AI 내부 구현이 변경되더라도  
+Spring Boot의 변경 범위를 최소화하기 위한 선택입니다.
 
 ### Progress Tracking
 
-작업 완료 알림만 보내는 Webhook 대신  
-실시간 진행률을 조회할 수 있도록 Polling 방식을 선택했습니다.
+시뮬레이션 진행 상태는 Redis Atomic Counter와  
+FastAPI Status API를 통해 조회하도록 구성했습니다.
 
 ```text
 Simulation
@@ -1084,8 +1053,7 @@ FastAPI /status
 Spring Polling
 ```
 
-분석 완료 상태는 EC2 Lifecycle과 독립적으로 유지하기 위해  
-S3의 완료 데이터를 함께 사용하도록 설계했습니다.
+상태는 다음과 같이 구분했습니다.
 
 ```text
 running
@@ -1097,6 +1065,11 @@ analyzing
 completed
 → Analysis 완료
 ```
+
+분석 완료 상태는 EC2 Lifecycle과 분리하기 위해  
+S3의 완료 데이터도 함께 사용하도록 설계했습니다.
+
+</details>
 
 ---
 
@@ -1126,19 +1099,21 @@ completed
 
 </div>
 
+<br/>
+
 | Category | Technologies |
 |---|---|
-| Language | Python |
-| AI Framework | FastAPI, Playwright |
-| LLM | GPT-4o-mini, GPT-4o |
-| Vision / Fix | Claude Vision, Claude Haiku |
-| Cognitive Processing | NumPy, scikit-learn, PIL |
-| Queue | Redis, Celery |
-| Backend | Spring Boot |
-| Database | PostgreSQL / AWS RDS |
-| Storage | AWS S3 |
-| Pipeline | AWS Step Functions, Lambda |
-| Infrastructure | AWS EC2, Docker |
+| **Language** | Python |
+| **AI Framework** | FastAPI, Playwright |
+| **LLM** | GPT-4o-mini, GPT-4o |
+| **Vision / Fix** | Claude Vision, Claude Haiku |
+| **Cognitive Processing** | NumPy, scikit-learn, PIL |
+| **Queue** | Redis, Celery |
+| **Backend** | Spring Boot |
+| **Database** | PostgreSQL / AWS RDS |
+| **Storage** | AWS S3 |
+| **Pipeline** | AWS Step Functions, Lambda |
+| **Infrastructure** | AWS EC2, Docker |
 
 ---
 
@@ -1150,21 +1125,20 @@ completed
 
 ## 웹공학 트랙 교수 평가 1위
 
+<br/>
+
+**AI Framework 전체 설계 및 개발 · 4인 팀 팀장**
+
 </div>
 
-AI에게 Persona를 Prompt로 부여하는 기존 접근에서 출발했지만,  
-개발 과정에서 **인지제약 → 웹 탐색 → Memory → Dynamic Web → 대규모 분석**까지 직접 구조화하며  
-실제 웹사이트에서 동작하는 AI 사용자 시뮬레이션 Framework로 발전시켰습니다.
-
-### Award
+<br/>
 
 <p align="center">
-  <!-- 상장 사진 업로드 후 src만 변경 -->
-  <img width="400" height="600" alt="KakaoTalk_Photo_2026-09-01-16-23-57" src="https://github.com/user-attachments/assets/bd03e4c8-f455-47d6-bcf9-4b45126de9e0" />
+  <img width="400" height="600" alt="UX-Swarm Capstone Award" src="https://github.com/user-attachments/assets/bd03e4c8-f455-47d6-bcf9-4b45126de9e0" />
 </p>
 
 <p align="center">
-  <sub>캡스톤 디자인 수상 상장</sub>
+  <sub>UX-Swarm 캡스톤 디자인 수상</sub>
 </p>
 
 ---
@@ -1172,13 +1146,13 @@ AI에게 Persona를 Prompt로 부여하는 기존 접근에서 출발했지만,
 # 🎤 Presentation & Demo
 
 <p align="center">
-  <img width="612" height="408" alt="KakaoTalk_Photo_2026-09-01-15-14-38_evoto_edited" src="https://github.com/user-attachments/assets/1f90da1b-ed20-4b1c-a935-b9faa7f8830b" />
+  <img width="612" height="408" alt="UX-Swarm Presentation" src="https://github.com/user-attachments/assets/1f90da1b-ed20-4b1c-a935-b9faa7f8830b" />
 </p>
 
 <p align="center">
   <sub>
     2026 캡스톤 디자인 현장에서 UX-Swarm의 AI Framework 구조와
-    실제 Persona Simulation 과정을 시연했습니다.
+    실제 Persona Simulation 과정을 발표 및 시연
   </sub>
 </p>
 
@@ -1199,7 +1173,7 @@ AI에게 Persona를 Prompt로 부여하는 기존 접근에서 출발했지만,
       <img
         src="https://github.com/user-attachments/assets/cd899a49-a8a8-4d90-918b-dc08caa414c6"
         width="100%"
-        alt="Swarm 시뮬레이션 구동 환경"
+        alt="Swarm Simulation Environment"
       />
       <br/>
       <b>AI Simulation 구동 환경</b>
@@ -1213,44 +1187,43 @@ AI에게 Persona를 Prompt로 부여하는 기존 접근에서 출발했지만,
 
 | Repository | Description |
 |---|---|
-| **BE_AI_Framework** | AI Framework · Cognitive Layer · Navigator · WebNormalizer · Analysis Pipeline |
-| **BE** | Spring Boot API Server · PostgreSQL · Infrastructure |
-| **FE** | React + TypeScript Dashboard |
-| **Swarm Organization** | 프로젝트 전체 소개 및 Architecture |
+| **[BE_AI_Framework](https://github.com/S-warm/BE_AI_Framework)** | AI Framework · Cognitive Layer · Navigator · WebNormalizer · Analysis Pipeline |
+| **[BE](https://github.com/S-warm/BE)** | Spring Boot API Server · PostgreSQL · Infrastructure |
+| **[FE](https://github.com/S-warm/FE)** | React + TypeScript Dashboard |
+| **[Swarm Organization](https://github.com/S-warm)** | 프로젝트 전체 Repository 및 서비스 소개 |
 
 ---
 
 # 💡 What I Learned
 
 UX-Swarm을 개발하면서 가장 크게 배운 것은  
-**LLM의 성능만으로 Agent의 품질이 결정되지 않는다는 점**이었습니다.
+**Agent의 품질은 LLM의 성능만으로 결정되지 않는다는 점**이었습니다.
 
-웹 상태와 Memory를 어떻게 관리할지,  
-AI에게 어떤 정보를 보여줄지,  
-어떤 판단을 LLM에게 맡기고 어떤 판단을 코드에서 보장할지에 따라  
+AI에게 어떤 정보를 전달할지,  
+Application이 어떤 상태를 관리할지,  
+어떤 판단을 LLM에게 맡기고 어떤 판단을 코드로 보장할지에 따라  
 Agent의 안정성과 비용이 크게 달라졌습니다.
 
-특히 프로젝트를 진행하며 다음 원칙을 실제 문제를 통해 정립했습니다.
+프로젝트를 진행하며 특히 세 가지 원칙을 중요하게 생각하게 됐습니다.
 
 > **1. LLM의 행동을 바꾸려면 Prompt뿐 아니라 Input 구조를 설계해야 한다.**
 
-> **2. Memory는 LLM이 아니라 Application Layer가 관리한다.**
+> **2. Agent의 State와 Memory는 Application Layer에서 명시적으로 관리한다.**
 
-> **3. Critical Control Flow는 LLM 응답에만 의존하지 않는다.**
+> **3. 시스템의 Critical Control Flow는 LLM 응답에만 의존하지 않는다.**
 
-> **4. Dynamic Web은 URL이 아니라 실제 DOM 상태를 함께 봐야 한다.**
+초기 설계를 그대로 구현하기보다  
+실제 웹사이트에서 발생하는 실패를 관찰하고 원인을 추적하며  
+가정을 수정하는 과정에 집중했습니다.
 
-> **5. 최적화 전에 데이터가 어디서 생성되고 어디서 소비되는지 먼저 확인한다.**
-
-초기 설계를 그대로 구현하는 것보다,  
-실제 웹사이트에서 실패하는 지점을 추적하고 가정을 수정하면서  
-**AI가 실제 환경에서 안정적으로 동작하기 위한 시스템을 설계하는 과정**에 집중했습니다.
+그 과정에서 **LLM을 사용하는 기능을 만드는 것을 넘어,  
+AI가 실제 환경에서 안정적으로 동작하기 위한 시스템을 설계하는 경험**을 할 수 있었습니다.
 
 ---
 
 <div align="center">
 
-### UX-Swarm
+## UX-Swarm
 
 **Code-Level Cognitive Constraints for AI User Simulation**
 
